@@ -1045,6 +1045,63 @@ button:not(:disabled) {
   transform: translateX(-50%);
 }
 
+.image-cover {
+  background: #15110f;
+}
+
+.image-cover img {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.01);
+}
+
+.image-cover::before {
+  inset: 0;
+  z-index: 1;
+  border: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(180deg, rgba(10, 8, 7, 0.08) 0%, rgba(10, 8, 7, 0.02) 48%, rgba(10, 8, 7, 0.42) 100%),
+    radial-gradient(circle at 50% 12%, rgba(255, 244, 211, 0.12), transparent 42%);
+}
+
+.image-cover::after {
+  display: none;
+}
+
+.image-cover em {
+  z-index: 3;
+  background: rgba(18, 14, 11, 0.56);
+  color: #fff5d8;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+}
+
+.image-cover > strong {
+  z-index: 3;
+  top: 12px;
+  left: 12px;
+  transform: none;
+  box-shadow: 0 10px 22px rgba(255, 100, 32, 0.2);
+}
+
+.cover-mini.image-cover em,
+.cover-mini.image-cover > strong {
+  display: none;
+}
+
+.cover-unlock.image-cover::before {
+  inset: 0;
+  border-radius: inherit;
+}
+
+.cover-unlock.image-cover img {
+  transform: none;
+}
+
 .cover-unlock em,
 .cover-unlock strong {
   display: none !important;

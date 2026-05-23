@@ -1,0 +1,51 @@
+{
+  "generatedAt": "2026-05-23T13:07:48.799150+00:00",
+  "size": "1200x675",
+  "excluded": "june-introduce first talking video",
+  "thumbnails": [
+    {
+      "id": "ritu-reply",
+      "title": "Will they reply, or is it over?",
+      "path": "/Users/amansing108/Documents/New project/public/assets/thumbnails/ritu-reply-thumbnail.png",
+      "url": "/assets/thumbnails/ritu-reply-thumbnail.png"
+    },
+    {
+      "id": "shaadi-window",
+      "title": "Meri shaadi kab tak hogi?",
+      "path": "/Users/amansing108/Documents/New project/public/assets/thumbnails/shaadi-window-thumbnail.png",
+      "url": "/assets/thumbnails/shaadi-window-thumbnail.png"
+    },
+    {
+      "id": "career-gap",
+      "title": "HR round, career gap, salary?",
+      "path": "/Users/amansing108/Documents/New project/public/assets/thumbnails/career-gap-thumbnail.png",
+      "url": "/assets/thumbnails/career-gap-thumbnail.png"
+    },
+    {
+      "id": "cash-flow",
+      "title": "Cash flow kab stable hoga?",
+      "path": "/Users/amansing108/Documents/New project/public/assets/thumbnails/cash-flow-thumbnail.png",
+      "url": "/assets/thumbnails/cash-flow-thumbnail.png"
+    },
+    {
+      "id": "relationship-improve-june",
+      "title": "Will this relationship improve in June?",
+      "path": "/Users/amansing108/Documents/New project/public/assets/thumbnails/relationship-improve-june-thumbnail.png",
+      "url": "/assets/thumbnails/relationship-improve-june-thumbnail.png"
+    },
+    {
+      "id": "leo-june-transits",
+      "title": "Leo June transits: work, money, love",
+      "path": "/Users/amansing108/Documents/New project/public/assets/thumbnails/leo-june-transits-thumbnail.png",
+      "url": "/assets/thumbnails/leo-june-transits-thumbnail.png"
+    },
+    {
+      "id": "kundli-match",
+      "title": "Are we actually compatible long term?",
+      "path": "/Users/amansing108/Documents/New project/public/assets/thumbnails/kundli-match-thumbnail.png",
+      "url": "/assets/thumbnails/kundli-match-thumbnail.png"
+    }
+  ],
+  "contactSheet": "/Users/amansing108/Documents/New project/public/assets/thumbnails/contact-sheet.png",
+  "updatedAt": "2026-05-23T13:09:31.509295+00:00"
+}

@@ -128,6 +128,7 @@ const stories = [
     audio: true,
     cover: "messageMoon",
     coverLabel: "No reply loop",
+    coverImage: "assets/cards/will-they-reply.png",
     color: "coral",
     madeFor: "Ananya",
     source: "uses your chat tone and 222 similar love-reunion questions",
@@ -189,6 +190,7 @@ const stories = [
     audio: true,
     cover: "weddingWindow",
     coverLabel: "Shaadi window",
+    coverImage: "assets/cards/shaadi-window.png",
     color: "pink",
     madeFor: "Ananya",
     source: "built from your chart plus 406 similar marriage chats",
@@ -250,6 +252,7 @@ const stories = [
     audio: true,
     cover: "interview",
     coverLabel: "Interview room",
+    coverImage: "assets/cards/hr-career-gap.png",
     color: "blue",
     madeFor: "Ananya",
     source: "built from HR, gap, salary, and job-switch chats",
@@ -311,6 +314,7 @@ const stories = [
     audio: true,
     cover: "cashRiver",
     coverLabel: "Cash flow",
+    coverImage: "assets/cards/cash-flow.png",
     color: "yellow",
     madeFor: "",
     source: "built from cash-flow, business, and income chats",
@@ -371,6 +375,7 @@ const stories = [
     audio: true,
     cover: "messageMoon",
     coverLabel: "June love reset",
+    coverImage: "assets/cards/relationship-improve-june.png",
     color: "coral",
     madeFor: "",
     source: "built from Scorpio love questions and June transit patterns",
@@ -432,6 +437,7 @@ const stories = [
     audio: true,
     cover: "transitWheel",
     coverLabel: "Leo transit map",
+    coverImage: "assets/cards/leo-june-transits.png",
     color: "yellow",
     madeFor: "",
     source: "built from Leo rashi transit patterns for June",
@@ -493,6 +499,7 @@ const stories = [
     audio: true,
     cover: "matchGrid",
     coverLabel: "2-chart match",
+    coverImage: "assets/cards/kundli-compatibility.png",
     color: "green",
     madeFor: "Ananya",
     source: "uses both charts, chat patterns, and compatibility scoring",
@@ -1271,6 +1278,20 @@ function renderMiniStoryCard(story) {
 }
 
 function renderCover(story, size) {
+  if (story.coverImage) {
+    return `
+      <div class="cover-art cover-${size} image-cover tone-${story.color}" aria-hidden="true">
+        <img
+          src="${escapeHtml(story.coverImage)}"
+          alt=""
+          loading="${size === "wide" || size === "large" ? "eager" : "lazy"}"
+        />
+        <em>${escapeHtml(story.coverLabel)}</em>
+        ${story.badge ? `<strong>${escapeHtml(story.badge)}</strong>` : ""}
+      </div>
+    `;
+  }
+
   return `
     <div class="cover-art cover-${size} motif-${story.cover} tone-${story.color}" aria-hidden="true">
       <span></span>
