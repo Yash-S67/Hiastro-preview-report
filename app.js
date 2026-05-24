@@ -4,6 +4,7 @@ const DEFAULT_AUDIO_SRC = "assets/audio/elevenlabs-testji.mp3";
 const categories = [
   { id: "All", label: "All", icon: "library", color: "gold" },
   { id: "June 2026", label: "June 2026", icon: "clock", color: "blue" },
+  { id: "Transit", label: "Transit", icon: "sun", color: "yellow" },
   { id: "Marriage", label: "Marriage", icon: "home", color: "pink" },
   { id: "Love", label: "Love", icon: "heart", color: "coral" },
   { id: "Career", label: "Career", icon: "briefcase", color: "blue" },
@@ -12,6 +13,14 @@ const categories = [
 ];
 
 const curationPicks = [
+  {
+    label: "Big transit",
+    title: "Jupiter in Cancer",
+    caption: "video + remedies",
+    icon: "sun",
+    open: "jupiter-cancer-transit",
+    color: "yellow",
+  },
   {
     label: "Rashi read",
     title: "Scorpio x Love x June",
@@ -39,6 +48,70 @@ const curationPicks = [
 ];
 
 const stories = [
+  {
+    id: "jupiter-cancer-transit",
+    category: "June 2026",
+    related: ["Transit", "Career", "Wealth", "Education"],
+    scope: "Transit video read",
+    type: "Jupiter Transit · Cancer",
+    badge: "New video",
+    title: "Jupiter enters Cancer from 3 June",
+    subtitle: "Guru moves into its exaltation sign: career, money, study, family, and remedies.",
+    chatQuestion: "Jupiter Cancer transit ka mere liye kya effect hoga - career, paisa, family?",
+    chatShort: "\"Jupiter Cancer transit ka effect kya hoga?\"",
+    price: 199,
+    oldPrice: 399,
+    rating: "4.91",
+    reads: "52.4k",
+    pages: 8,
+    minutes: 12,
+    axis: "Jupiter x Cancer x 12-month cycle",
+    formatLabel: "8 parts · video/read/listen",
+    trailer: "Transit video · 24 sec",
+    parts: ["Why big", "Career", "Money", "Remedies"],
+    freePages: 2,
+    personalized: false,
+    audio: true,
+    video: "assets/jupiter-transit-cancer.mp4",
+    cover: "transitWheel",
+    coverLabel: "Jupiter in Cancer",
+    color: "yellow",
+    madeFor: "",
+    source: "inspired by Jupiter transit themes: exaltation, aspects, career, money, family, and remedies",
+    forecast: "Jupiter Transit · Cancer",
+    forecastCopy: "Guru enters Cancer: growth, fortune, family, career, and remedies.",
+    filters: ["Transit", "Rashi", "Career", "Wealth", "Audio"],
+    detailTitle: "Jupiter Transit",
+    insideTitle: "Questions you'll find answered",
+    questions: [
+      "Jupiter Cancer transit mere rashi ko kaise affect karega?",
+      "Career ya money me sabse pehle movement kaha aayega?",
+      "Family, marriage, education par kya impact hoga?",
+      "Which remedies make this transit more favourable?",
+      "What should I avoid during this Guru transit?",
+    ],
+    inside: [
+      ["Why big", "Why Cancer makes this Guru transit powerful.", "p.1"],
+      ["Career", "Where job change, recognition, or direction opens.", "p.2"],
+      ["Money", "Income, savings, and decision timing.", "p.4"],
+      ["Family", "Home, love, marriage, study, and support.", "p.5"],
+      ["Remedies", "Pooja, jaap, and practical timing rules.", "p.8"],
+    ],
+    reader: {
+      kicker: "I · GURU ENTERS CANCER",
+      headline: "This is not a tiny monthly shift. It is a bigger 12-month door opening.",
+      paragraphs: [
+        "From 3 June, Jupiter moves into Cancer, the sign where Guru is traditionally treated as exalted. The feeling is slower than a notification, but larger: direction, wisdom, family support, and the courage to make a cleaner decision.",
+        "The biggest promise is not instant luck. It is better timing. Career, money, learning, family, and marriage decisions start becoming easier to read when you stop forcing everything in the same week.",
+        "The full read breaks the transit into house effects, direct and special aspects, near-term windows, and remedies. For most users, the win is knowing when to act and when to let Guru do the quiet work.",
+      ],
+      window: "3 Jun 2026 -> Jun 2027",
+      peak: "Aug -> Nov 2026",
+      format: "Transit map",
+      strength: 5,
+    },
+    unlockNote: "full transit map + remedies",
+  },
   {
     id: "june-introduce",
     category: "June 2026",
