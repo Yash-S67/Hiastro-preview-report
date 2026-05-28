@@ -655,6 +655,7 @@ const state = {
   bookmarkedReportIds: new Set(["june-introduce", "kundli-match"]),
   generatedReportIds: new Set(["jupiter-cancer-transit", "relationship-improve-june"]),
   lastGeneratedStoryId: "",
+  generatingStoryId: "",
   activeAudioSectionIndex: 0,
   videoPaused: new Set(),
   videoSoundOn: new Set(),
@@ -732,7 +733,6 @@ app.addEventListener("click", (event) => {
 
   if (openStory) {
     state.selectedStoryId = openStory.dataset.open;
-    markReportGenerated(state.selectedStoryId);
     state.screen = "detail";
     render();
     return;
@@ -808,12 +808,11 @@ function handleAction(action) {
     }
   }
   if (action === "unlock") state.screen = "unlock";
-  if (action === "close-unlock") state.screen = "reader";
+  if (action === "close-unlock") state.screen = "detail";
   if (action === "pay") {
     state.subscriptionStatus = "subscribed";
     state.readerMode = "Read";
-    state.screen = "reader";
-    showToast("Subscribed. Personalized reports are ready.");
+    startReportGeneration(getSelectedStory().id);
   }
   if (action === "menu") showToast("More options");
 
@@ -823,7 +822,11 @@ function handleAction(action) {
 
 function openReader(storyId, mode) {
   state.selectedStoryId = storyId;
-  markReportGenerated(storyId);
+  const story = getSelectedStory();
+  if (story.personalized && isSubscriber() && !state.generatedReportIds.has(storyId)) {
+    startReportGeneration(storyId);
+    return;
+  }
   state.readerMode = mode;
   state.screen = "reader";
   if (mode === "Listen") startNarration(getSelectedStory(), false);
@@ -842,13 +845,22 @@ function openAudioScreen(storyId) {
   playCurrentAudio(getSelectedStory());
 }
 
-function markReportGenerated(storyId) {
-  if (!state.generatedReportIds.has(storyId)) {
+function startReportGeneration(storyId) {
+  state.selectedStoryId = storyId;
+  state.generatingStoryId = storyId;
+  state.lastGeneratedStoryId = "";
+  state.screen = "generating";
+  stopNarration(false);
+  render();
+  window.setTimeout(() => {
+    if (state.generatingStoryId !== storyId) return;
     state.generatedReportIds.add(storyId);
     state.lastGeneratedStoryId = storyId;
-  } else {
-    state.lastGeneratedStoryId = "";
-  }
+    state.generatingStoryId = "";
+    state.readerMode = "Read";
+    state.screen = "reader";
+    render();
+  }, 1800);
 }
 
 function toggleStoryVideo(storyId) {
@@ -973,6 +985,7 @@ function renderScreen() {
   if (state.screen === "detail") return renderDetailScreen();
   if (state.screen === "reader") return renderReaderScreen(false);
   if (state.screen === "audio") return renderAudioScreen();
+  if (state.screen === "generating") return renderGeneratingScreen();
   if (state.screen === "unlock") return renderUnlockScreen();
   return renderHomeScreen();
 }
@@ -1355,7 +1368,17 @@ function renderCategoryScreen() {
 function renderDetailScreen() {
   const story = getSelectedStory();
   const isUnlocked = isStoryUnlocked(story);
-  const generationStatus = state.lastGeneratedStoryId === story.id ? "Generated now" : "Cached report";
+  const isGenerated = state.generatedReportIds.has(story.id);
+  const generationStatus = story.personalized
+    ? isGenerated
+      ? "Cached report"
+      : "Generated after subscription"
+    : "Ready instantly";
+  const generationCopy = story.personalized
+    ? isGenerated
+      ? "Loaded instantly from the saved report cache."
+      : "Preview is available now. Full report is created only after subscription to save compute."
+    : "General report is a standard template and does not need personal generation.";
   const accessLabel = story.personalized
     ? isUnlocked
       ? "Included in your subscription"
@@ -1380,8 +1403,8 @@ function renderDetailScreen() {
         <p><strong>${escapeHtml(accessLabel)}</strong> — ${story.personalized ? `Made for ${escapeHtml(story.madeFor)}` : escapeHtml(story.scope)}. ${escapeHtml(story.source)}.</p>
       </section>
       <section class="generation-panel">
-        <span>${renderIcon("check")}</span>
-        <p><strong>${generationStatus}</strong><small>${generationStatus === "Generated now" ? "Created on demand from profile and chat memory. It is cached for instant re-open." : "Loaded instantly from the saved report cache."}</small></p>
+        <span>${renderIcon(isGenerated || !story.personalized ? "check" : "spark")}</span>
+        <p><strong>${generationStatus}</strong><small>${generationCopy}</small></p>
       </section>
       ${renderQuickReportStructure(story)}
       ${story.id === "kundli-match" ? renderPartnerDetailPanel() : ""}
@@ -1606,6 +1629,30 @@ function getAudioTranscriptSections(story) {
       text: paragraph,
     };
   });
+}
+
+function renderGeneratingScreen() {
+  const story = getSelectedStory();
+  return `
+    <main class="generating-screen">
+      <section class="generating-card">
+        ${renderCover(story, "unlock")}
+        <div class="generation-orbit" aria-hidden="true">
+          <span></span>
+          <i></i>
+          <b></b>
+        </div>
+        <span>Creating report</span>
+        <h1>${escapeHtml(story.title)}</h1>
+        <p>Reading your profile, previous questions, and chart context. This report will be cached after generation.</p>
+        <div class="generation-steps">
+          <em></em>
+          <em></em>
+          <em></em>
+        </div>
+      </section>
+    </main>
+  `;
 }
 
 function renderUnlockScreen() {
