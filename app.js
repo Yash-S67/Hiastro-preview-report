@@ -1569,7 +1569,7 @@ function renderAudioScreen() {
   const activeSection = transcriptSections[state.activeAudioSectionIndex] || transcriptSections[0];
 
   return `
-    <main class="audio-screen">
+    <main class="audio-screen ${isPlaying ? "is-playing" : "is-paused"}">
       <header class="audio-top-nav">
         <button class="round-button" type="button" data-action="back" aria-label="Back">
           ${renderIcon("chevronLeft")}
@@ -1583,9 +1583,16 @@ function renderAudioScreen() {
         ${renderCover(story, "unlock")}
       </section>
       <section class="spotify-player">
-        <span>${story.personalized ? "Personalized audio report" : "General audio report"}</span>
+        <div class="audio-chip-row">
+          <span>${story.personalized ? "Personalized audio report" : "General audio report"}</span>
+          <span>${isAudioDownloaded ? "Available offline" : "Resume 04:12"}</span>
+          <span>Calm guidance</span>
+        </div>
         <h1>${escapeHtml(story.title)}</h1>
         <p>${story.minutes} min · ${isAudioDownloaded ? "Available offline" : "Tap download to listen offline"} · ${escapeHtml(story.trailer || "Narrated report")}</p>
+        <div class="audio-waveform" aria-hidden="true">
+          ${Array.from({ length: 24 }, (_, index) => `<i style="--wave:${(index % 7) + 1}"></i>`).join("")}
+        </div>
         <div class="audio-progress" aria-hidden="true">
           <i style="width:${isPlaying ? "38%" : "12%"}"></i>
         </div>
@@ -1617,6 +1624,7 @@ function renderAudioScreen() {
             )
             .join("")}
         </section>
+        ${renderAudioQueue(story)}
         <audio
           class="story-audio"
           data-story-audio="${story.id}"
@@ -1625,6 +1633,28 @@ function renderAudioScreen() {
         ></audio>
       </section>
     </main>
+  `;
+}
+
+function renderAudioQueue(story) {
+  const queue = stories
+    .filter((item) => item.id !== story.id && item.audio)
+    .slice(0, 2);
+
+  return `
+    <section class="audio-next-up" aria-label="Next up">
+      <span>Next up</span>
+      ${queue
+        .map(
+          (item) => `
+            <button type="button" data-listen="${item.id}">
+              <strong>${escapeHtml(item.title)}</strong>
+              <small>${item.minutes} min · ${item.personalized ? "Personalized" : "General"}</small>
+            </button>
+          `
+        )
+        .join("")}
+    </section>
   `;
 }
 
