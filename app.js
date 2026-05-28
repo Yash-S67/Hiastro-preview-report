@@ -12,6 +12,31 @@ const categories = [
   { id: "Education", label: "Education", icon: "graduation", color: "green" },
 ];
 
+const productTabs = [
+  { id: "Report", label: "Report", icon: "bookOpen" },
+  { id: "Audiobook", label: "Audiobook", icon: "headphones" },
+  { id: "Podcast", label: "Podcast", icon: "radio" },
+];
+
+const linkedExperiences = [
+  {
+    id: "podcast",
+    label: "Podcast",
+    title: "Today’s Astro Brief",
+    copy: "A 6-minute audio digest from your recent questions.",
+    icon: "radio",
+    action: "podcast",
+  },
+  {
+    id: "myday",
+    label: "MyDay",
+    title: "Personal Day Plan",
+    copy: "Turn report insights into timing, focus, and rituals.",
+    icon: "calendar",
+    action: "myday",
+  },
+];
+
 const curationPicks = [
   {
     label: "Big transit",
@@ -621,7 +646,16 @@ const state = {
   selectedStoryId: initialStory.id,
   categoryFilter: "All",
   readerMode: "Read",
-  payChoice: "one-time",
+  productTab: params.get("tab") || "Report",
+  payChoice: "premium",
+  subscriptionStatus: params.get("plan") === "subscribed" ? "subscribed" : params.get("plan") === "none" ? "no_plan" : "free_trial",
+  unlockedReportIds: new Set(),
+  downloadedReportIds: new Set(["jupiter-cancer-transit", "relationship-improve-june"]),
+  downloadedAudioIds: new Set(["jupiter-cancer-transit"]),
+  bookmarkedReportIds: new Set(["june-introduce", "kundli-match"]),
+  generatedReportIds: new Set(["jupiter-cancer-transit", "relationship-improve-june"]),
+  lastGeneratedStoryId: "",
+  activeAudioSectionIndex: 0,
   videoPaused: new Set(),
   videoSoundOn: new Set(),
   narratingStoryId: "",
@@ -639,9 +673,12 @@ app.addEventListener("click", (event) => {
   const openStory = event.target.closest("[data-open]");
   const readStory = event.target.closest("[data-read]");
   const listenStory = event.target.closest("[data-listen]");
+  const buyStory = event.target.closest("[data-buy]");
+  const productTab = event.target.closest("[data-product-tab]");
   const payChoice = event.target.closest("[data-pay-choice]");
   const videoToggle = event.target.closest("[data-video-toggle]");
   const videoSound = event.target.closest("[data-video-sound]");
+  const audioSection = event.target.closest("[data-audio-section]");
   const action = event.target.closest("[data-action]");
 
   if (videoSound) {
@@ -660,18 +697,42 @@ app.addEventListener("click", (event) => {
     return;
   }
 
+  if (audioSection) {
+    state.activeAudioSectionIndex = Number(audioSection.dataset.audioSection) || 0;
+    render();
+    return;
+  }
+
   if (readStory) {
     openReader(readStory.dataset.read, "Read");
     return;
   }
 
   if (listenStory) {
-    openReader(listenStory.dataset.listen, "Listen");
+    openAudioScreen(listenStory.dataset.listen);
+    return;
+  }
+
+  if (buyStory) {
+    state.selectedStoryId = buyStory.dataset.buy;
+    state.screen = "unlock";
+    render();
+    return;
+  }
+
+  if (productTab) {
+    state.productTab = productTab.dataset.productTab;
+    state.screen = "home";
+    state.selectedCategory = "All";
+    if (state.productTab === "Audiobook") state.categoryFilter = "Audio";
+    else state.categoryFilter = "All";
+    render();
     return;
   }
 
   if (openStory) {
     state.selectedStoryId = openStory.dataset.open;
+    markReportGenerated(state.selectedStoryId);
     state.screen = "detail";
     render();
     return;
@@ -712,8 +773,24 @@ function handleAction(action) {
   }
 
   if (action === "search") showToast("Search will cover chats, months, topics, and rashi.");
-  if (action === "bookmark") showToast("Saved to your library.");
-  if (action === "wallet") showToast("Wallet balance: ₹340");
+  if (action === "bookmark") {
+    state.bookmarkedReportIds.add(getSelectedStory().id);
+    showToast("Bookmarked.");
+  }
+  if (action === "saved-books") {
+    state.screen = "saved";
+    stopNarration(false);
+  }
+  if (action === "download-report") {
+    state.downloadedReportIds.add(getSelectedStory().id);
+    showToast("Downloaded for offline reading.");
+  }
+  if (action === "download-audio") {
+    state.downloadedAudioIds.add(getSelectedStory().id);
+    showToast("Audiobook downloaded for offline listening.");
+  }
+  if (action === "podcast") showToast("Podcast will open as a linked audio product.");
+  if (action === "myday") showToast("MyDay will open as a linked planning product.");
   if (action === "mode-read") {
     state.readerMode = "Read";
     stopNarration(false);
@@ -732,7 +809,12 @@ function handleAction(action) {
   }
   if (action === "unlock") state.screen = "unlock";
   if (action === "close-unlock") state.screen = "reader";
-  if (action === "pay") showToast(`Payment started: ${formatPrice(getSelectedStory().price)}`);
+  if (action === "pay") {
+    state.subscriptionStatus = "subscribed";
+    state.readerMode = "Read";
+    state.screen = "reader";
+    showToast("Subscribed. Personalized reports are ready.");
+  }
   if (action === "menu") showToast("More options");
 
   render();
@@ -741,12 +823,32 @@ function handleAction(action) {
 
 function openReader(storyId, mode) {
   state.selectedStoryId = storyId;
+  markReportGenerated(storyId);
   state.readerMode = mode;
   state.screen = "reader";
   if (mode === "Listen") startNarration(getSelectedStory(), false);
   else stopNarration(false);
   render();
   if (mode === "Listen") playCurrentAudio(getSelectedStory());
+}
+
+function openAudioScreen(storyId) {
+  state.selectedStoryId = storyId;
+  state.readerMode = "Listen";
+  state.activeAudioSectionIndex = 0;
+  state.screen = "audio";
+  startNarration(getSelectedStory(), false);
+  render();
+  playCurrentAudio(getSelectedStory());
+}
+
+function markReportGenerated(storyId) {
+  if (!state.generatedReportIds.has(storyId)) {
+    state.generatedReportIds.add(storyId);
+    state.lastGeneratedStoryId = storyId;
+  } else {
+    state.lastGeneratedStoryId = "";
+  }
 }
 
 function toggleStoryVideo(storyId) {
@@ -856,12 +958,10 @@ function showToast(message) {
 }
 
 function render() {
-  const hideBottomNav = ["detail", "reader", "unlock"].includes(state.screen);
   app.innerHTML = `
     <section class="app-screen screen-${state.screen}">
       ${renderStatusBar()}
       ${renderScreen()}
-      ${hideBottomNav ? "" : renderBottomNav()}
       ${state.toast ? `<div class="toast" role="status">${escapeHtml(state.toast)}</div>` : ""}
     </section>
   `;
@@ -869,8 +969,10 @@ function render() {
 
 function renderScreen() {
   if (state.screen === "category") return renderCategoryScreen();
+  if (state.screen === "saved") return renderSavedBooksScreen();
   if (state.screen === "detail") return renderDetailScreen();
   if (state.screen === "reader") return renderReaderScreen(false);
+  if (state.screen === "audio") return renderAudioScreen();
   if (state.screen === "unlock") return renderUnlockScreen();
   return renderHomeScreen();
 }
@@ -890,32 +992,279 @@ function renderStatusBar() {
 }
 
 function renderHomeScreen() {
-  const spotlight = stories[0];
-  const secondary = stories.slice(1, 8);
+  const specialReports = stories.filter((story) => story.personalized);
+  const generalReports = stories.filter((story) => !story.personalized);
+  const purchasedReports = isSubscriber() ? specialReports.slice(0, 2) : [];
+  const bookmarkedReports = getBookmarkedReports();
+  const downloadedReports = getDownloadedReports();
+  const spotlight = specialReports[0] || stories[0];
+  const librarySpecialReports = specialReports.filter((story) => story.id !== spotlight.id);
+
+  if (state.productTab === "Audiobook") {
+    return `
+      <main class="content-scroll home-screen">
+        ${renderHomeHeader()}
+        ${renderProductTabs()}
+        <section class="section-intro">
+          <span>Audiobook</span>
+          <h2>Listen-first astrology</h2>
+          <p>Personalized and general reports with direct playback, built for commute, night listening, and quick clarity.</p>
+        </section>
+        <section class="audiobook-list" aria-label="Audiobook reports">
+          ${[...specialReports, ...generalReports].slice(0, 7).map(renderAudiobookRow).join("")}
+        </section>
+        ${renderLinkedExperiences()}
+      </main>
+    `;
+  }
+
+  if (state.productTab === "Podcast") {
+    return `
+      <main class="content-scroll home-screen">
+        ${renderHomeHeader()}
+        ${renderProductTabs()}
+        <section class="podcast-hero">
+          <span>${renderIcon("radio")}</span>
+          <small>Podcast</small>
+          <h2>Today’s Astro Brief</h2>
+          <p>A calm daily audio show made from trending user questions, transits, and the themes you keep returning to.</p>
+          <button type="button" data-action="podcast">${renderIcon("play")} Play latest episode</button>
+        </section>
+        ${renderLinkedExperiences()}
+        <section class="shelf-section general-report-section" aria-labelledby="podcast-linked-heading">
+          <div class="section-title">
+            <div>
+              <span>Go deeper</span>
+              <h2 id="podcast-linked-heading">Reports linked to this episode</h2>
+            </div>
+          </div>
+          <div class="general-report-grid">
+            ${generalReports.slice(0, 3).map(renderGeneralReportCard).join("")}
+          </div>
+        </section>
+      </main>
+    `;
+  }
 
   return `
     <main class="content-scroll home-screen">
       ${renderHomeHeader()}
-      ${renderCategoryRail()}
-      ${renderChatCallout(spotlight)}
-      ${renderForecastStrip(spotlight)}
-      <section class="story-feed" aria-label="Personalized reads">
+      ${renderProductTabs()}
+      <section class="section-intro">
+        <span>Special reports</span>
+        <h2>Specially for you</h2>
+        <p>${isSubscriber() ? "Your subscription unlocks personalized reports generated from repeated questions and chart context." : "General reports are free in trial and no-plan mode. Personalized reports unlock with subscription."}</p>
+      </section>
+      <section class="story-feed special-report-section" aria-label="Special reports from chat history">
         ${renderLargeStoryCard(spotlight)}
       </section>
-      ${renderCurationRail()}
-      <section class="shelf-section" aria-labelledby="chat-topics-heading">
-        <div class="section-title">
-          <div>
-            <span>From chat patterns</span>
-            <h2 id="chat-topics-heading">What people keep asking</h2>
-          </div>
-          <button type="button" data-category="Love">View</button>
-        </div>
-        <div class="mini-shelf">
-          ${secondary.map(renderMiniStoryCard).join("")}
-        </div>
-      </section>
+      ${renderLinkedExperiences()}
+      ${renderBookSection("Downloaded books", "Available offline", downloadedReports, { status: "Downloaded" })}
+      ${renderBookSection("Personalized reports", "Subscriber only", librarySpecialReports)}
+      ${renderBookSection("General reports", "Free for trial and no-plan users", generalReports)}
+      ${renderLibraryShelf("My purchased reports", purchasedReports)}
+      ${renderLibraryShelf("Bookmarked books", bookmarkedReports)}
     </main>
+  `;
+}
+
+function renderBookSection(title, eyebrow, sectionStories, options = {}) {
+  if (!sectionStories.length) return "";
+  return `
+    <section class="shelf-section book-section" aria-label="${escapeHtml(title)}">
+      <div class="section-title">
+        <div>
+          <span>${escapeHtml(eyebrow)}</span>
+          <h2>${escapeHtml(title)}</h2>
+        </div>
+      </div>
+      <div class="book-grid">
+        ${sectionStories.map((story) => renderBookCard(story, options)).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function renderBookCard(story, options = {}) {
+  const isUnlocked = isStoryUnlocked(story);
+  const status = options.status || (story.personalized ? (isUnlocked ? "Included" : "Subscriber only") : "Free");
+  const secondAction = options.action === "listen"
+    ? `data-listen="${story.id}"`
+    : story.personalized && !isUnlocked
+      ? `data-buy="${story.id}"`
+      : `data-read="${story.id}"`;
+  const secondLabel = options.action === "listen" ? "Listen" : "Read";
+  return `
+    <article class="book-card tone-${story.color}">
+      ${renderDiscoveryLabel(story)}
+      ${renderCover(story, "unlock")}
+      <div class="book-copy">
+        <span>${escapeHtml(status)}</span>
+        <h3>${escapeHtml(story.title)}</h3>
+        <p>${story.pages} pages · ${story.minutes} min</p>
+      </div>
+      <div class="book-actions">
+        <button type="button" data-open="${story.id}">Preview</button>
+        <button type="button" ${secondAction}>${secondLabel}</button>
+      </div>
+    </article>
+  `;
+}
+
+function renderDiscoveryLabel(story) {
+  const label = getDiscoveryLabel(story);
+  return label ? `<span class="discovery-label">${escapeHtml(label)}</span>` : "";
+}
+
+function getDiscoveryLabel(story) {
+  if (["june-introduce", "ritu-reply", "shaadi-window"].includes(story.id)) return "Recommended for You";
+  if (["jupiter-cancer-transit", "kundli-match", "relationship-improve-june"].includes(story.id)) return "Most Bought";
+  if (story.personalized || story.pages <= 5) return "Quick Answer";
+  return "";
+}
+
+function renderSavedBooksScreen() {
+  const downloadedReports = getDownloadedReports();
+  const downloadedAudioReports = getDownloadedAudioReports();
+  const bookmarkedReports = getBookmarkedReports();
+
+  return `
+    <main class="content-scroll saved-screen">
+      ${renderTopNav("Saved books", "search")}
+      <section class="section-intro">
+        <span>Library</span>
+        <h2>Your offline and bookmarked books</h2>
+        <p>Downloaded reports and audiobooks are available offline. Bookmarked books stay saved for later reading.</p>
+      </section>
+      ${renderBookSection("Downloaded reports", "Available offline", downloadedReports, { status: "Downloaded" })}
+      ${renderBookSection("Downloaded audiobooks", "Offline listening", downloadedAudioReports, { status: "Audio downloaded", action: "listen" })}
+      ${renderBookSection("Bookmarked books", "Saved for later", bookmarkedReports, { status: "Bookmarked" })}
+    </main>
+  `;
+}
+
+function renderLibraryShelf(title, shelfStories) {
+  if (!shelfStories.length) return "";
+  return `
+    <section class="shelf-section library-shelf" aria-label="${escapeHtml(title)}">
+      <div class="section-title">
+        <div>
+          <span>Library</span>
+          <h2>${escapeHtml(title)}</h2>
+        </div>
+      </div>
+      <div class="library-card-row">
+        ${shelfStories.map(renderLibraryCard).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function renderLibraryCard(story) {
+  const isUnlocked = isStoryUnlocked(story);
+  return `
+    <article class="library-card tone-${story.color}">
+      ${renderCover(story, "unlock")}
+      <div>
+        <span>${story.personalized ? "Subscriber report" : "Free general report"}</span>
+        <h3>${escapeHtml(story.title)}</h3>
+        <p>${story.pages} pages · ${story.minutes} min</p>
+      </div>
+      <div class="library-actions">
+        <button type="button" data-open="${story.id}">Preview</button>
+        <button type="button" ${story.personalized && !isUnlocked ? `data-buy="${story.id}"` : `data-read="${story.id}"`}>Read</button>
+      </div>
+    </article>
+  `;
+}
+
+function renderAudiobookRow(story) {
+  const isUnlocked = isStoryUnlocked(story);
+  return `
+    <article class="audiobook-row tone-${story.color}">
+      ${renderCover(story, "unlock")}
+      <div>
+        <span>${story.personalized ? (isUnlocked ? "Subscriber audio report" : "Subscription required") : "Free general audio report"}</span>
+        <h3>${escapeHtml(story.title)}</h3>
+        <p>${story.minutes} min · ${story.pages} sections · ${escapeHtml(story.trailer || "Narrated report")}</p>
+      </div>
+      <button type="button" ${story.personalized && !isUnlocked ? `data-buy="${story.id}"` : `data-listen="${story.id}"`} aria-label="${story.personalized && !isUnlocked ? "Subscribe for" : "Listen to"} ${escapeHtml(story.title)}">${renderIcon(story.personalized && !isUnlocked ? "lock" : "play")}</button>
+    </article>
+  `;
+}
+
+function renderProductTabs() {
+  return `
+    <nav class="product-tabs" aria-label="Content type">
+      ${productTabs
+        .map((tab) => {
+          const active = state.productTab === tab.id;
+          return `
+            <button class="${active ? "is-active" : ""}" type="button" data-product-tab="${tab.id}" aria-pressed="${active}">
+              ${renderIcon(tab.icon)}
+              <span>${escapeHtml(tab.label)}</span>
+            </button>
+          `;
+        })
+        .join("")}
+    </nav>
+  `;
+}
+
+function renderLinkedExperiences() {
+  return `
+    <section class="linked-experience-strip" aria-label="Linked experiences">
+      ${linkedExperiences
+        .map(
+          (item) => `
+            <button class="linked-experience-card" type="button" data-action="${item.action}">
+              <span>${renderIcon(item.icon)}</span>
+              <small>${escapeHtml(item.label)}</small>
+              <strong>${escapeHtml(item.title)}</strong>
+              <em>${escapeHtml(item.copy)}</em>
+            </button>
+          `
+        )
+        .join("")}
+    </section>
+  `;
+}
+
+function renderCompactSpecialCard(story) {
+  const isUnlocked = isStoryUnlocked(story);
+  return `
+    <article class="compact-special-card tone-${story.color}">
+      ${renderCover(story, "unlock")}
+      <div>
+        <span>Specially for you</span>
+        <h3>${escapeHtml(story.title)}</h3>
+        <p>${escapeHtml(story.chatShort)}</p>
+        <small>${story.pages} pages · ${story.minutes} min listen</small>
+      </div>
+      <b>${isUnlocked ? "Included" : "Subscribe"}</b>
+      <div class="compact-card-actions">
+        <button type="button" data-open="${story.id}">Preview</button>
+        <button type="button" ${story.personalized && !isUnlocked ? `data-buy="${story.id}"` : `data-read="${story.id}"`}>Read</button>
+      </div>
+    </article>
+  `;
+}
+
+function renderGeneralReportCard(story) {
+  return `
+    <article class="general-report-card tone-${story.color}">
+      ${renderDiscoveryLabel(story)}
+      ${renderCover(story, "mini")}
+      <div class="general-report-copy">
+        <span>${escapeHtml(story.category)} · Free</span>
+        <h3>${escapeHtml(story.title)}</h3>
+        <p>${escapeHtml(story.subtitle)}</p>
+      </div>
+      <div class="general-report-actions">
+        <button type="button" data-open="${story.id}">Preview</button>
+        <button type="button" data-read="${story.id}">${renderIcon("bookOpen")}Read</button>
+      </div>
+    </article>
   `;
 }
 
@@ -942,10 +1291,9 @@ function renderHomeHeader() {
   return `
     <header class="home-header">
       <h1><span>Hi</span>Astro</h1>
-      <button class="wallet-pill" type="button" data-action="wallet" aria-label="Wallet balance">
-        ${renderIcon("wallet")}
-        <b>₹340.00</b>
-        <span>+</span>
+      <button class="library-button" type="button" data-action="saved-books" aria-label="Open downloaded and bookmarked books">
+        ${renderIcon("download")}
+        <b>Library</b>
       </button>
     </header>
   `;
@@ -978,23 +1326,41 @@ function renderForecastStrip(story) {
 function renderCategoryScreen() {
   const category = categories.find((item) => item.id === state.selectedCategory) || categories[1];
   const visibleStories = getFilteredStories();
-  const lead = visibleStories[0] || stories[0];
+  const specialReports = visibleStories.filter((story) => story.personalized);
+  const generalReports = visibleStories.filter((story) => !story.personalized);
+  const spotlight = specialReports[0] || generalReports[0] || stories[0];
+  const remainingSpecialReports = specialReports.filter((story) => story.id !== spotlight.id);
+  const remainingGeneralReports = generalReports.filter((story) => story.id !== spotlight.id);
 
   return `
     <main class="content-scroll category-screen">
       ${renderHomeHeader()}
-      ${renderCategoryRail()}
-      ${renderChatCallout(lead)}
-      ${renderForecastStrip(lead)}
-      <section class="story-feed" aria-label="${escapeHtml(category.label)} stories">
-        ${visibleStories.map(renderLargeStoryCard).join("")}
+      ${renderProductTabs()}
+      <section class="section-intro">
+        <span>${escapeHtml(category.label)}</span>
+        <h2>${escapeHtml(category.label)} reports</h2>
+        <p>Clean previews first, then a calm reading page when the user is ready.</p>
       </section>
+      ${spotlight ? `
+        <section class="story-feed special-report-section" aria-label="${escapeHtml(category.label)} special reports">
+          ${renderLargeStoryCard(spotlight)}
+        </section>
+      ` : ""}
+      ${renderBookSection("Personalized reports", "Subscriber only", remainingSpecialReports)}
+      ${renderBookSection("General reports", "Free for trial and no-plan users", remainingGeneralReports)}
     </main>
   `;
 }
 
 function renderDetailScreen() {
   const story = getSelectedStory();
+  const isUnlocked = isStoryUnlocked(story);
+  const generationStatus = state.lastGeneratedStoryId === story.id ? "Generated now" : "Cached report";
+  const accessLabel = story.personalized
+    ? isUnlocked
+      ? "Included in your subscription"
+      : "Subscription required"
+    : "Free for trial and no-plan users";
 
   return `
     <main class="content-scroll detail-screen">
@@ -1011,12 +1377,25 @@ function renderDetailScreen() {
       </section>
       <section class="made-for-panel">
         <span>${renderIcon("spark")}</span>
-        <p><strong>${story.personalized ? `Made for ${escapeHtml(story.madeFor)}` : escapeHtml(story.scope)}</strong> — ${escapeHtml(story.source)}.</p>
+        <p><strong>${escapeHtml(accessLabel)}</strong> — ${story.personalized ? `Made for ${escapeHtml(story.madeFor)}` : escapeHtml(story.scope)}. ${escapeHtml(story.source)}.</p>
       </section>
+      <section class="generation-panel">
+        <span>${renderIcon("check")}</span>
+        <p><strong>${generationStatus}</strong><small>${generationStatus === "Generated now" ? "Created on demand from profile and chat memory. It is cached for instant re-open." : "Loaded instantly from the saved report cache."}</small></p>
+      </section>
+      ${renderQuickReportStructure(story)}
+      ${story.id === "kundli-match" ? renderPartnerDetailPanel() : ""}
       ${renderPartsPanel(story)}
       <section class="questions-panel">
         <span>${escapeHtml(story.insideTitle)}</span>
         ${story.questions.map((question, index) => renderQuestionRow(question, index)).join("")}
+      </section>
+      <section class="report-download-row">
+        <div>
+          <span>${renderIcon("download")}</span>
+          <p><strong>${state.downloadedReportIds.has(story.id) ? "Downloaded" : "Download report"}</strong><small>${state.downloadedReportIds.has(story.id) ? "Available offline in your library." : "Save this report for offline reading."}</small></p>
+        </div>
+        <button type="button" data-action="download-report">${state.downloadedReportIds.has(story.id) ? "Saved" : "Download"}</button>
       </section>
       <section class="detail-actions">
         <button class="secondary-action" type="button" data-read="${story.id}">
@@ -1024,22 +1403,60 @@ function renderDetailScreen() {
           <span>${story.freePages} pages</span>
           <strong>Preview</strong>
         </button>
-        <button class="primary-action" type="button" data-listen="${story.id}">
-          ${renderIcon("headphones")}
-          <span>${story.minutes} min</span>
-          <strong>Listen ${formatPrice(story.price)}</strong>
+        <button class="primary-action" type="button" ${story.personalized && !isUnlocked ? `data-buy="${story.id}"` : `data-listen="${story.id}"`}>
+          ${renderIcon(story.personalized && !isUnlocked ? "lock" : "headphones")}
+          <span>${story.personalized && !isUnlocked ? "Subscriber only" : `${story.minutes} min`}</span>
+          <strong>${story.personalized && !isUnlocked ? "Subscribe" : "Listen"}</strong>
         </button>
       </section>
     </main>
   `;
 }
 
+function renderPartnerDetailPanel() {
+  return `
+    <section class="partner-detail-panel">
+      <div>
+        <span>${renderIcon("profile")}</span>
+        <strong>Partner details required</strong>
+        <small>Name, date of birth, time, and place before generating the full Kundli match report.</small>
+      </div>
+      <button type="button" data-action="menu">Add partner details</button>
+    </section>
+  `;
+}
+
+function renderQuickReportStructure(story) {
+  const reportKind = story.pages <= 8 ? "Short report" : "Long report";
+  const timeline = story.reader?.window || "Personal timeline";
+  const nextStep = story.parts?.[0] || story.inside?.[0]?.[0] || "Answer";
+  return `
+    <section class="quick-structure-panel">
+      <div class="quick-structure-head">
+        <span>${renderIcon("clock")}</span>
+        <div>
+          <strong>${reportKind}</strong>
+          <small>${story.pages} pages · ${story.minutes} min read · low jargon</small>
+        </div>
+      </div>
+      <div class="quick-structure-grid">
+        <div><b>Answer</b><span>${escapeHtml(story.chatQuestion || story.title)}</span></div>
+        <div><b>Timeline</b><span>${escapeHtml(timeline)}</span></div>
+        <div><b>Next</b><span>${escapeHtml(story.reader?.format || nextStep)}</span></div>
+        <div><b>Guidance</b><span>Gentle remedy + clear action</span></div>
+      </div>
+    </section>
+  `;
+}
+
 function renderReaderScreen(dimmed) {
   const story = getSelectedStory();
+  const isGeneralReport = !story.personalized;
+  const isUnlocked = isGeneralReport || isStoryUnlocked(story);
   const lockedPages = Math.max(story.pages - story.freePages, 0);
 
   return `
-    <main class="reader-screen ${dimmed ? "is-dimmed" : ""}">
+    <main class="reader-screen ${dimmed ? "is-dimmed" : ""} ${isUnlocked ? "is-distraction-free" : ""}">
       <header class="reader-nav">
         <button class="round-button" type="button" data-action="back" aria-label="Back">
           ${renderIcon("chevronLeft")}
@@ -1052,10 +1469,10 @@ function renderReaderScreen(dimmed) {
           ${renderIcon("more")}
         </button>
       </header>
-      <div class="reader-progress" aria-hidden="true">
+      ${isUnlocked ? "" : `<div class="reader-progress" aria-hidden="true">
         ${Array.from({ length: story.pages }, (_, index) => `<span class="${index < story.freePages ? "is-read" : ""}"></span>`).join("")}
-      </div>
-      <section class="mode-switch" aria-label="Reader mode">
+      </div>`}
+      ${isUnlocked ? "" : `<section class="mode-switch" aria-label="Reader mode">
         <button class="${state.readerMode === "Read" ? "is-active" : ""}" type="button" data-action="mode-read">
           ${renderIcon("bookOpen")}
           Read
@@ -1064,37 +1481,131 @@ function renderReaderScreen(dimmed) {
           ${renderIcon("headphones")}
           Listen
         </button>
-      </section>
-      ${state.readerMode === "Listen" ? renderAudioPlayer(story) : ""}
+      </section>`}
+      ${!isUnlocked && state.readerMode === "Listen" ? renderAudioPlayer(story) : ""}
       <article class="reader-article">
-        <span>${escapeHtml(story.reader.kicker)}</span>
+        <div class="reader-section-head">
+          <span>${escapeHtml(story.reader.kicker)}</span>
+          ${renderSectionListenButton(story)}
+        </div>
         <h2>${escapeHtml(story.reader.headline)}</h2>
         <p>${escapeHtml(story.reader.paragraphs[0])}</p>
         <aside class="window-card">
-          <span>${story.id === "june-introduce" ? "The week" : "Your window"}</span>
+          <div class="reader-section-head">
+            <span>${story.id === "june-introduce" ? "The week" : "Your window"}</span>
+            ${renderSectionListenButton(story)}
+          </div>
           <strong>${escapeHtml(story.reader.window)}</strong>
           <small>Most likely: <b>${escapeHtml(story.reader.peak)}</b> · Format: <em>${escapeHtml(story.reader.format)}</em></small>
         </aside>
         <p>${escapeHtml(story.reader.paragraphs[1])}</p>
-        <div class="locked-copy">
+        <div class="${isUnlocked ? "" : "locked-copy"}">
+          ${isUnlocked ? `<div class="reader-section-head">${renderSectionListenButton(story)}</div>` : ""}
           <p>${escapeHtml(story.reader.paragraphs[2])}</p>
         </div>
       </article>
-      ${dimmed ? "" : `
+      ${dimmed || isUnlocked ? "" : `
         <section class="paywall-panel">
           <div>
             <span>${renderIcon("lock")}</span>
             <div>
-              <strong>${lockedPages} more ${lockedPages === 1 ? "page" : "pages"} to go</strong>
-              <small>Remedies, exact dates, what to avoid.</small>
+              <strong>Personalized report is subscriber-only</strong>
+              <small>General reports remain free for trial and no-plan users.</small>
             </div>
           </div>
-          <button type="button" data-action="unlock">Unlock for ${formatPrice(story.price)} ${renderIcon("arrowRight")}</button>
-          <p>Or use ₹340 wallet · Or upgrade to Premium</p>
+          <button type="button" data-action="unlock">Subscribe to continue ${renderIcon("arrowRight")}</button>
+          <p>${lockedPages} subscriber pages · exact dates, remedies, and personal answer.</p>
         </section>
       `}
     </main>
   `;
+}
+
+function renderSectionListenButton(story) {
+  return `
+    <button class="section-listen-button" type="button" data-listen="${story.id}" aria-label="Listen to this section">
+      ${renderIcon("headphones")}
+      Listen
+    </button>
+  `;
+}
+
+function renderAudioScreen() {
+  const story = getSelectedStory();
+  const isPlaying = state.narratingStoryId === story.id;
+  const isAudioDownloaded = state.downloadedAudioIds.has(story.id);
+  const transcriptSections = getAudioTranscriptSections(story);
+  const activeSection = transcriptSections[state.activeAudioSectionIndex] || transcriptSections[0];
+
+  return `
+    <main class="audio-screen">
+      <header class="audio-top-nav">
+        <button class="round-button" type="button" data-action="back" aria-label="Back">
+          ${renderIcon("chevronLeft")}
+        </button>
+        <span>Audiobook</span>
+        <button class="round-button" type="button" data-action="download-audio" aria-label="Download audiobook">
+          ${renderIcon(isAudioDownloaded ? "check" : "download")}
+        </button>
+      </header>
+      <section class="audio-cover-stage">
+        ${renderCover(story, "unlock")}
+      </section>
+      <section class="spotify-player">
+        <span>${story.personalized ? "Personalized audio report" : "General audio report"}</span>
+        <h1>${escapeHtml(story.title)}</h1>
+        <p>${story.minutes} min · ${isAudioDownloaded ? "Available offline" : "Tap download to listen offline"} · ${escapeHtml(story.trailer || "Narrated report")}</p>
+        <div class="audio-progress" aria-hidden="true">
+          <i style="width:${isPlaying ? "38%" : "12%"}"></i>
+        </div>
+        <div class="audio-time-row">
+          <small>${isPlaying ? "04:12" : "00:00"}</small>
+          <small>${story.minutes}:00</small>
+        </div>
+        <div class="audio-control-row">
+          <button type="button" data-action="menu" aria-label="Previous">${renderIcon("chevronLeft")}</button>
+          <button class="audio-main-control" type="button" data-action="audio-toggle" aria-label="${isPlaying ? "Pause audio" : "Play audio"}">
+            ${renderIcon(isPlaying ? "pause" : "play")}
+          </button>
+          <button type="button" data-action="menu" aria-label="Next">${renderIcon("chevronRight")}</button>
+        </div>
+        <section class="now-speaking-card">
+          <span>Now speaking</span>
+          <strong>${escapeHtml(activeSection.title)}</strong>
+          <p>${escapeHtml(activeSection.text)}</p>
+        </section>
+        <section class="audio-chapter-list" aria-label="Audiobook chapters">
+          ${transcriptSections
+            .map(
+              (section, index) => `
+                <button class="${index === state.activeAudioSectionIndex ? "is-active" : ""}" type="button" data-audio-section="${index}">
+                  <small>${String(index + 1).padStart(2, "0")}</small>
+                  <span>${escapeHtml(section.title)}</span>
+                </button>
+              `
+            )
+            .join("")}
+        </section>
+        <audio
+          class="story-audio"
+          data-story-audio="${story.id}"
+          src="${escapeHtml(getAudioSrc(story))}"
+          ${isPlaying ? "autoplay" : ""}
+        ></audio>
+      </section>
+    </main>
+  `;
+}
+
+function getAudioTranscriptSections(story) {
+  const fallbackParts = story.parts || story.inside.map(([title]) => title);
+  return story.reader.paragraphs.map((paragraph, index) => {
+    const section = story.inside[index] || [];
+    return {
+      title: section[0] || fallbackParts[index] || story.reader.kicker,
+      text: paragraph,
+    };
+  });
 }
 
 function renderUnlockScreen() {
@@ -1102,34 +1613,30 @@ function renderUnlockScreen() {
   return `
     ${renderReaderScreen(true)}
     <div class="unlock-backdrop" data-action="close-unlock"></div>
-    <section class="unlock-sheet" role="dialog" aria-modal="true" aria-label="Unlock report">
+    <section class="unlock-sheet" role="dialog" aria-modal="true" aria-label="Subscribe for personalized reports">
       <button class="sheet-close" type="button" data-action="close-unlock" aria-label="Close">${renderIcon("close")}</button>
       <span class="sheet-handle"></span>
-      <h2>Unlock the full report<br />"${escapeHtml(story.title)}"</h2>
+      <h2>Subscribe to read<br />personalized reports</h2>
       <article class="unlock-book">
         ${renderCover(story, "unlock")}
         <div>
           <strong>${escapeHtml(story.title)}</strong>
-          <small>${story.pages} pages · stays in your library</small>
+          <small>${story.pages} pages · subscriber-only</small>
           <span>${renderStars(1)} ${story.rating} · ${story.reads} read</span>
         </div>
       </article>
-      <div class="pay-options">
-        ${renderPayOption("one-time", formatPrice(story.price), "One-time", "Save 43%")}
-        ${renderPayOption("wallet", "Wallet", "₹340 left", "Pays ₹199")}
-      </div>
       <button class="premium-option" type="button" data-pay-choice="premium">
-        <strong>Premium</strong>
+        <strong>Subscription</strong>
         <span>₹299/mo</span>
-        <small>3 short + 1 long</small>
+        <small>Personalized reports + full clean reader</small>
       </button>
       <div class="unlock-success">
-        <strong>You unlock: ${escapeHtml(story.unlockNote)} 🎉</strong>
-        <span>${story.pages - story.freePages} more pages · stays forever in library</span>
+        <strong>General reports stay free.</strong>
+        <span>Free trial and no-plan users can read all general reports without a paywall.</span>
       </div>
-      <p class="refund-note">Refundable for 7 days · ${escapeHtml(story.reads)} have read this</p>
+      <p class="refund-note">Personalized reports use chat history and chart context, so they are included only with subscription.</p>
       <button class="pay-button" type="button" data-action="pay">
-        Proceed to pay ${formatPrice(story.price)} ${renderIcon("arrowRight")}
+        Start subscription ${renderIcon("arrowRight")}
       </button>
     </section>
   `;
@@ -1213,10 +1720,11 @@ function renderCategoryRail() {
 
 function renderLargeStoryCard(story) {
   const hasVideo = Boolean(story.video);
+  const isUnlocked = isStoryUnlocked(story);
 
   return `
     <article class="large-story-card tone-${story.color} ${hasVideo ? "has-video" : ""}">
-      <button class="story-hit-area" type="button" data-open="${story.id}" aria-label="${escapeHtml(story.title)}"></button>
+      ${renderDiscoveryLabel(story)}
       ${hasVideo ? "" : `
         <div class="card-topline">
           ${renderMetaPill("star", `${story.rating} (${story.reads})`)}
@@ -1233,7 +1741,7 @@ function renderLargeStoryCard(story) {
         <h2>${escapeHtml(story.title)}</h2>
         <div class="large-story-meta">
           <strong>${escapeHtml(story.title)}</strong>
-          <span>${escapeHtml(story.category)} · ${story.pages} p · ${story.minutes}m</span>
+          <span>${escapeHtml(story.category)} · ${story.pages} p · ${story.personalized ? (isUnlocked ? "Included" : "Subscriber only") : "Free"}</span>
         </div>
         <p>${escapeHtml(story.subtitle)}</p>
         <div class="story-format-row">
@@ -1242,23 +1750,14 @@ function renderLargeStoryCard(story) {
         </div>
         ${renderPartPills(story)}
         <div class="card-actions">
-          <button class="secondary-action" type="button" data-read="${story.id}">
+          <button class="secondary-action" type="button" data-open="${story.id}">
             ${renderIcon("message")}
-            <span>${story.freePages} pages</span>
             <strong>Preview</strong>
           </button>
-          <button class="primary-action" type="button" data-read="${story.id}">
-            ${renderIcon("bookOpen")}
-            <span>${story.pages} pages</span>
-            <strong>Read ${formatPrice(story.price)}</strong>
+          <button class="primary-action" type="button" ${story.personalized && !isUnlocked ? `data-buy="${story.id}"` : `data-read="${story.id}"`}>
+            ${renderIcon(story.personalized && !isUnlocked ? "lock" : "bookOpen")}
+            <strong>Read</strong>
           </button>
-          ${story.audio ? `
-            <button class="listen-action" type="button" data-listen="${story.id}">
-              ${renderIcon("headphones")}
-              <span>${story.minutes} min</span>
-              <strong>Listen</strong>
-            </button>
-          ` : ""}
         </div>
       </div>
     </article>
@@ -1291,42 +1790,31 @@ function renderTalkingVideo(story, size) {
   const soundOn = state.videoSoundOn.has(story.id);
   const actionLabel = isPaused ? "Play" : "Stop";
   const soundLabel = soundOn ? "Mute" : "Sound";
-  const topline =
-    size === "wide"
-      ? `
-        ${renderMetaPill("star", `${story.rating} (${story.reads})`)}
-        <span>${escapeHtml(story.type)}</span>
-        <b>${story.personalized ? "Made for you" : story.badge}</b>
-      `
-      : `
-        <span>${escapeHtml(story.coverLabel)}</span>
-        <b>${escapeHtml(story.badge || story.scope)}</b>
-      `;
 
   return `
     <div class="talking-card media-${size} ${isPaused ? "is-paused" : "is-playing"}">
       <video src="${escapeHtml(story.video)}" ${isPaused ? "" : "autoplay"} ${soundOn ? "" : "muted"} loop playsinline preload="metadata"></video>
       <div class="talking-scrim" aria-hidden="true"></div>
-      <div class="talking-topline">${topline}</div>
-      <button
-        class="video-toggle"
-        type="button"
-        data-video-toggle="${story.id}"
-        aria-label="${actionLabel} talking forecast"
-      >
-        ${renderIcon(isPaused ? "play" : "pause")}
-        <span>${actionLabel}</span>
-      </button>
-      <button
-        class="sound-toggle"
-        type="button"
-        data-video-sound="${story.id}"
-        aria-label="${soundLabel} talking video"
-      >
-        ${renderIcon("headphones")}
-        <span>${soundLabel}</span>
-      </button>
-      <h3>${escapeHtml(story.title)}</h3>
+      ${size === "large" ? `
+        <button
+          class="video-toggle"
+          type="button"
+          data-video-toggle="${story.id}"
+          aria-label="${actionLabel} talking forecast"
+        >
+          ${renderIcon(isPaused ? "play" : "pause")}
+          <span>${actionLabel}</span>
+        </button>
+        <button
+          class="sound-toggle"
+          type="button"
+          data-video-sound="${story.id}"
+          aria-label="${soundLabel} talking video"
+        >
+          ${renderIcon("headphones")}
+          <span>${soundLabel}</span>
+        </button>
+      ` : ""}
     </div>
   `;
 }
@@ -1458,6 +1946,26 @@ function getSelectedStory() {
   return stories.find((story) => story.id === state.selectedStoryId) || stories[0];
 }
 
+function getDownloadedReports() {
+  return stories.filter((story) => state.downloadedReportIds.has(story.id));
+}
+
+function getDownloadedAudioReports() {
+  return stories.filter((story) => state.downloadedAudioIds.has(story.id));
+}
+
+function getBookmarkedReports() {
+  return stories.filter((story) => state.bookmarkedReportIds.has(story.id));
+}
+
+function isStoryUnlocked(story) {
+  return !story.personalized || isSubscriber() || state.unlockedReportIds.has(story.id);
+}
+
+function isSubscriber() {
+  return state.subscriptionStatus === "subscribed";
+}
+
 function formatPrice(price) {
   return price === 0 ? "Free" : `₹${price}`;
 }
@@ -1479,6 +1987,7 @@ function renderIcon(name) {
     clock: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" /><path d="M12 7v5l3 2" /></svg>`,
     close: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>`,
     coins: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8.5c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5S15.8 6 13 6 8 7.1 8 8.5Z" /><path d="M8 8.5v4c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5v-4" /><path d="M6 11c-1.2.5-2 1.2-2 2.1 0 1.4 2.2 2.5 5 2.5M4 13.1v3.8c0 1.4 2.2 2.5 5 2.5 1.6 0 3-.4 3.9-1" /></svg>`,
+    download: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11" /><path d="m7 9 5 5 5-5" /><path d="M5 19h14" /></svg>`,
     graduation: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 9 9-4 9 4-9 4Z" /><path d="M7 11.2v4.2c1.5 1.3 3.2 2 5 2s3.5-.7 5-2v-4.2" /><path d="M21 9v5" /></svg>`,
     headphones: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14v-2a8 8 0 0 1 16 0v2" /><path d="M4 14h3v6H5.5A1.5 1.5 0 0 1 4 18.5ZM20 14h-3v6h1.5a1.5 1.5 0 0 0 1.5-1.5Z" /></svg>`,
     heart: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 5.8a5.3 5.3 0 0 0-7.5 0l-.7.7-.7-.7a5.3 5.3 0 0 0-7.5 7.5l.7.7L12 21.5l7.5-7.5.7-.7a5.3 5.3 0 0 0 0-7.5Z" /></svg>`,
@@ -1490,6 +1999,7 @@ function renderIcon(name) {
     pause: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14" /></svg>`,
     play: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10-6.5Z" /></svg>`,
     profile: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12.2a4.3 4.3 0 1 0 0-8.6 4.3 4.3 0 0 0 0 8.6Z" /><path d="M4.8 20.4a7.2 7.2 0 0 1 14.4 0" /></svg>`,
+    radio: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V9.5A4.5 4.5 0 0 1 9.5 5h5A4.5 4.5 0 0 1 19 9.5V19" /><path d="M8 19v-7.5A1.5 1.5 0 0 1 9.5 10h5a1.5 1.5 0 0 1 1.5 1.5V19M9 6 7 3M15 6l2-3" /><path d="M10 14h4M10 17h4" /></svg>`,
     search: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 18a7.5 7.5 0 1 0 0-15 7.5 7.5 0 0 0 0 15ZM16 16l5 5" /></svg>`,
     spark: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 13.6 8l4.9 1.5-4.9 1.5L12 15.5 10.4 11 5.5 9.5 10.4 8Z" /><path d="m18 15 .8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8Z" /></svg>`,
     star: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6-5.4-2.8-5.4 2.8 1-6-4.4-4.3 6.1-.9Z" /></svg>`,
