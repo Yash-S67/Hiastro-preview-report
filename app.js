@@ -974,6 +974,7 @@ function render() {
     <section class="app-screen screen-${state.screen}">
       ${renderStatusBar()}
       ${renderScreen()}
+      ${state.screen === "detail" ? renderDetailActionBar() : ""}
       ${state.toast ? `<div class="toast" role="status">${escapeHtml(state.toast)}</div>` : ""}
     </section>
   `;
@@ -1420,19 +1421,26 @@ function renderDetailScreen() {
         </div>
         <button type="button" data-action="download-report">${state.downloadedReportIds.has(story.id) ? "Saved" : "Download"}</button>
       </section>
-      <section class="detail-actions">
-        <button class="secondary-action" type="button" data-read="${story.id}">
-          ${renderIcon("message")}
-          <span>${story.freePages} pages</span>
-          <strong>Preview</strong>
-        </button>
-        <button class="primary-action" type="button" ${story.personalized && !isUnlocked ? `data-buy="${story.id}"` : `data-listen="${story.id}"`}>
-          ${renderIcon(story.personalized && !isUnlocked ? "lock" : "headphones")}
-          <span>${story.personalized && !isUnlocked ? "Subscriber only" : `${story.minutes} min`}</span>
-          <strong>${story.personalized && !isUnlocked ? "Subscribe" : "Listen"}</strong>
-        </button>
-      </section>
     </main>
+  `;
+}
+
+function renderDetailActionBar() {
+  const story = getSelectedStory();
+  const isUnlocked = isStoryUnlocked(story);
+  return `
+    <section class="detail-actions">
+      <button class="secondary-action" type="button" data-read="${story.id}">
+        ${renderIcon("message")}
+        <span>${story.freePages} pages</span>
+        <strong>Preview</strong>
+      </button>
+      <button class="primary-action" type="button" ${story.personalized && !isUnlocked ? `data-buy="${story.id}"` : `data-listen="${story.id}"`}>
+        ${renderIcon(story.personalized && !isUnlocked ? "lock" : "headphones")}
+        <span>${story.personalized && !isUnlocked ? "Subscriber only" : `${story.minutes} min`}</span>
+        <strong>${story.personalized && !isUnlocked ? "Subscribe" : "Listen"}</strong>
+      </button>
+    </section>
   `;
 }
 
