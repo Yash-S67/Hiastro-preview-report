@@ -1590,9 +1590,6 @@ function renderAudioScreen() {
         </div>
         <h1>${escapeHtml(story.title)}</h1>
         <p>${story.minutes} min · ${isAudioDownloaded ? "Available offline" : "Tap download to listen offline"} · ${escapeHtml(story.trailer || "Narrated report")}</p>
-        <div class="audio-waveform" aria-hidden="true">
-          ${Array.from({ length: 24 }, (_, index) => `<i style="--wave:${(index % 7) + 1}"></i>`).join("")}
-        </div>
         <div class="audio-progress" aria-hidden="true">
           <i style="width:${isPlaying ? "38%" : "12%"}"></i>
         </div>
