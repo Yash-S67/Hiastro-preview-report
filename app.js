@@ -198,6 +198,48 @@ const stories = [
       format: "4-page match report",
       strength: 4,
     },
+    reportSections: [
+      {
+        kicker: "Page 1 · Overall match",
+        title: "Compatibility score and first reading",
+        body: "The match is positive, but it should be read as a practical compatibility report rather than a single yes-or-no number. The charts show enough support for commitment, family discussion, and long-term planning. The relationship becomes stronger when both people keep expectations clear instead of assuming the other person will understand silently.",
+        bullets: [
+          "Marriage potential is favourable when communication stays direct.",
+          "Emotional comfort is present, but both need time before opening fully.",
+          "Family alignment should be handled gradually, not suddenly.",
+        ],
+      },
+      {
+        kicker: "Page 2 · Strengths",
+        title: "Where Pankaj and Harsha naturally support each other",
+        body: "The strongest part of this match is steadiness. One person brings structure and responsibility, while the other brings warmth and emotional softness. This creates a good base for marriage because both can balance each other during important life decisions.",
+        bullets: [
+          "Good support for loyalty, patience, and long-term intention.",
+          "The match works well for building family stability.",
+          "Practical planning around money, home, and responsibilities can become a shared strength.",
+        ],
+      },
+      {
+        kicker: "Page 3 · Caution areas",
+        title: "Where conflict can quietly build",
+        body: "The main risk is not lack of care. The risk is delayed expression. If either person avoids a difficult conversation, the other may read it as distance or disinterest. Small misunderstandings can become larger if family pressure, timing, or ego enters the conversation.",
+        bullets: [
+          "Avoid discussing serious matters when either person is tired or reactive.",
+          "Do not let family members carry messages between both sides.",
+          "Be careful with silence after disagreement; it can create unnecessary doubt.",
+        ],
+      },
+      {
+        kicker: "Page 4 · Remedies and guidance",
+        title: "Simple care plan before marriage discussion",
+        body: "The best remedy is a mix of spiritual steadiness and practical behaviour. Keep the relationship calm, transparent, and respectful during family-level conversations. The report recommends one small ritual for softness and one relationship habit for clarity.",
+        bullets: [
+          "Offer white sweets or flowers on Friday with a peaceful marriage intention.",
+          "Have one clear weekly conversation about plans, family, and expectations.",
+          "Before final decisions, confirm birth details and review the full guna, dosha, and timing checks.",
+        ],
+      },
+    ],
     unlockNote: "full matching score + remedies",
   },
   {
@@ -992,7 +1034,7 @@ function startSpeechFallback(story) {
   const text = [
     story.title,
     story.reader.headline,
-    ...story.reader.paragraphs,
+    ...getReaderNarrationLines(story),
     `Window: ${story.reader.window}. Peak: ${story.reader.peak}.`,
   ].join(". ");
   currentUtterance = new SpeechSynthesisUtterance(text);
@@ -1597,6 +1639,7 @@ function renderReaderScreen(dimmed) {
         <div class="${isUnlocked ? "" : "locked-copy"}">
           ${isUnlocked ? `<div class="reader-section-head">${renderSectionListenButton(story)}</div>` : ""}
           <p>${escapeHtml(story.reader.paragraphs[2])}</p>
+          ${renderFullReportSections(story, isUnlocked)}
         </div>
       </article>
       ${dimmed || isUnlocked ? "" : `
@@ -1614,6 +1657,36 @@ function renderReaderScreen(dimmed) {
       `}
     </main>
   `;
+}
+
+function renderFullReportSections(story, isUnlocked) {
+  if (!story.reportSections?.length) return "";
+
+  const markup = `
+    <section class="full-report-sections" aria-label="Full report">
+      ${story.reportSections
+        .map(
+          (section) => `
+            <section class="full-report-section">
+              <div class="reader-section-head">
+                <span>${escapeHtml(section.kicker)}</span>
+                ${isUnlocked ? renderSectionListenButton(story) : ""}
+              </div>
+              <h3>${escapeHtml(section.title)}</h3>
+              <p>${escapeHtml(section.body)}</p>
+              ${section.bullets?.length ? `
+                <ul>
+                  ${section.bullets.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
+                </ul>
+              ` : ""}
+            </section>
+          `
+        )
+        .join("")}
+    </section>
+  `;
+
+  return isUnlocked ? markup : `<div class="locked-copy">${markup}</div>`;
 }
 
 function renderSectionListenButton(story) {
@@ -1720,6 +1793,13 @@ function renderAudioQueue(story) {
 }
 
 function getAudioTranscriptSections(story) {
+  if (story.reportSections?.length) {
+    return story.reportSections.map((section) => ({
+      title: section.title,
+      text: [section.body, ...(section.bullets || [])].join(" "),
+    }));
+  }
+
   const fallbackParts = story.parts || story.inside.map(([title]) => title);
   return story.reader.paragraphs.map((paragraph, index) => {
     const section = story.inside[index] || [];
@@ -1728,6 +1808,16 @@ function getAudioTranscriptSections(story) {
       text: paragraph,
     };
   });
+}
+
+function getReaderNarrationLines(story) {
+  const reportLines = story.reportSections?.flatMap((section) => [
+    section.title,
+    section.body,
+    ...(section.bullets || []),
+  ]) || [];
+
+  return [...story.reader.paragraphs, ...reportLines];
 }
 
 function renderGeneratingScreen() {
