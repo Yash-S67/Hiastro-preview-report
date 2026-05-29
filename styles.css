@@ -3863,6 +3863,101 @@ body {
   gap: 10px;
 }
 
+.audiobook-feature {
+  position: relative;
+  display: grid;
+  grid-template-columns: 108px minmax(0, 1fr);
+  gap: 14px;
+  margin-bottom: 12px;
+  padding: 12px;
+  border: 1px solid rgba(246, 191, 40, 0.34);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 90% 12%, rgba(246, 191, 40, 0.22), transparent 30%),
+    linear-gradient(145deg, #111820, #1c2b38);
+  color: #fff6df;
+  box-shadow: 0 18px 42px rgba(12, 18, 24, 0.22);
+}
+
+.audiobook-feature .cover-mini {
+  width: 108px;
+  height: 150px;
+  border-radius: 8px;
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.26);
+}
+
+.audiobook-feature .discovery-label {
+  top: 8px;
+  left: 8px;
+}
+
+.audiobook-feature-copy {
+  display: grid;
+  min-width: 0;
+  align-content: center;
+  gap: 7px;
+}
+
+.audiobook-feature-copy span {
+  color: #f6bf28;
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+
+.audiobook-feature-copy h3 {
+  margin: 0;
+  color: #fff6df;
+  font-size: 19px;
+  line-height: 1.08;
+}
+
+.audiobook-feature-copy p {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  color: rgba(255, 246, 223, 0.72);
+  font-size: 12px;
+  line-height: 1.32;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.audiobook-feature-copy div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.audiobook-feature-copy small {
+  padding: 5px 7px;
+  border: 1px solid rgba(255, 246, 223, 0.10);
+  border-radius: 999px;
+  background: rgba(255, 246, 223, 0.08);
+  color: rgba(255, 246, 223, 0.78);
+  font-size: 10.5px;
+  font-weight: 850;
+}
+
+.audiobook-feature > button {
+  display: inline-flex;
+  min-height: 42px;
+  grid-column: 1 / -1;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 8px;
+  background: #f6bf28;
+  color: #111820;
+  font-weight: 950;
+}
+
+.audiobook-feature > button svg {
+  width: 17px;
+  height: 17px;
+}
+
 .audiobook-row {
   display: grid;
   grid-template-columns: 54px minmax(0, 1fr) 42px;

@@ -1120,6 +1120,11 @@ function renderHomeScreen() {
   const librarySpecialReports = specialReports.filter((story) => story.id !== spotlight.id);
 
   if (state.productTab === "Audiobook") {
+    const audiobookSpotlight = specialReports.find((story) => story.id === "pankaj-harsha-match") || specialReports[0] || stories[0];
+    const audiobookRows = [...specialReports, ...generalReports]
+      .filter((story) => story.id !== audiobookSpotlight.id)
+      .slice(0, 6);
+
     return `
       <main class="content-scroll home-screen">
         ${renderHomeHeader()}
@@ -1127,10 +1132,11 @@ function renderHomeScreen() {
         <section class="section-intro">
           <span>Audiobook</span>
           <h2>Listen-first astrology</h2>
-          <p>Personalized and general reports with direct playback, built for commute, night listening, and quick clarity.</p>
+          <p>Start with the same Pankaj & Harsha matching report, then continue into other audio reads.</p>
         </section>
+        ${renderAudiobookFeature(audiobookSpotlight)}
         <section class="audiobook-list" aria-label="Audiobook reports">
-          ${[...specialReports, ...generalReports].slice(0, 7).map(renderAudiobookRow).join("")}
+          ${audiobookRows.map(renderAudiobookRow).join("")}
         </section>
         ${renderLinkedExperiences()}
       </main>
@@ -1309,6 +1315,30 @@ function renderAudiobookRow(story) {
         <p>${story.minutes} min · ${story.pages} sections · ${escapeHtml(story.trailer || "Narrated report")}</p>
       </div>
       <button type="button" ${story.personalized && !isUnlocked ? `data-buy="${story.id}"` : `data-listen="${story.id}"`} aria-label="${story.personalized && !isUnlocked ? "Subscribe for" : "Listen to"} ${escapeHtml(story.title)}">${renderIcon(story.personalized && !isUnlocked ? "lock" : "play")}</button>
+    </article>
+  `;
+}
+
+function renderAudiobookFeature(story) {
+  const isUnlocked = isStoryUnlocked(story);
+  return `
+    <article class="audiobook-feature tone-${story.color}">
+      ${renderDiscoveryLabel(story)}
+      ${renderCover(story, "mini")}
+      <div class="audiobook-feature-copy">
+        <span>${story.personalized ? "Featured matching audio" : "Featured audio report"}</span>
+        <h3>${escapeHtml(story.title)}</h3>
+        <p>${escapeHtml(story.subtitle)}</p>
+        <div>
+          <small>${story.pages} pages</small>
+          <small>${story.minutes} min</small>
+          <small>${story.reportSections?.length || story.parts?.length || story.inside.length} chapters</small>
+        </div>
+      </div>
+      <button type="button" ${story.personalized && !isUnlocked ? `data-buy="${story.id}"` : `data-listen="${story.id}"`}>
+        ${renderIcon(story.personalized && !isUnlocked ? "lock" : "play")}
+        <strong>${story.personalized && !isUnlocked ? "Subscribe" : "Play report"}</strong>
+      </button>
     </article>
   `;
 }
