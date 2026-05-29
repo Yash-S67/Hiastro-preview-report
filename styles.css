@@ -3040,6 +3040,25 @@ body {
     0 22px 48px rgba(18, 19, 19, 0.18);
 }
 
+.audio-cover-stage .cover-unlock span,
+.audio-cover-stage .cover-unlock i,
+.audio-cover-stage .cover-unlock b {
+  display: block !important;
+}
+
+.audio-cover-stage .cover-unlock::after {
+  display: none;
+}
+
+.audio-cover-stage .cover-unlock em {
+  display: block !important;
+  max-width: calc(100% - 28px);
+}
+
+.audio-cover-stage .cover-unlock > strong {
+  display: block !important;
+}
+
 .image-cover::before {
   background:
     linear-gradient(180deg, rgba(8, 8, 7, 0.02) 0%, rgba(8, 8, 7, 0.12) 52%, rgba(8, 8, 7, 0.52) 100%),
@@ -4313,4 +4332,325 @@ body {
   .phone-frame {
     border: 0;
   }
+}
+
+/* HiAstro app theme alignment */
+:root {
+  --app-bg: #fff6df;
+  --page-bg: #101823;
+  --surface: #fffaf0;
+  --ink: #151a20;
+  --ink-soft: #45505a;
+  --muted: #7c827d;
+  --line: #eadfca;
+  --orange: #f6bf28;
+  --orange-dark: #c77b13;
+  --green: #07866f;
+  --shadow: 0 34px 96px rgba(11, 18, 25, 0.38);
+}
+
+body {
+  background:
+    radial-gradient(circle at 52% -14%, rgba(246, 191, 40, 0.34), transparent 34%),
+    radial-gradient(circle at 6% 96%, rgba(7, 134, 111, 0.20), transparent 30%),
+    linear-gradient(145deg, #101823 0%, #172431 46%, #0b1119 100%);
+}
+
+.phone-frame {
+  border: 1px solid rgba(255, 246, 223, 0.18);
+  background: #111820;
+  box-shadow:
+    0 36px 110px rgba(3, 9, 14, 0.56),
+    inset 0 0 0 8px rgba(255, 246, 223, 0.03);
+}
+
+.app-screen {
+  background:
+    radial-gradient(circle at 92% 2%, rgba(246, 191, 40, 0.24), transparent 27%),
+    linear-gradient(180deg, #fffaf0 0%, #fff2d6 54%, #f7ead0 100%);
+}
+
+.home-header,
+.top-nav,
+.reader-nav {
+  background: rgba(255, 250, 240, 0.90);
+  border-bottom: 1px solid rgba(234, 223, 202, 0.68);
+}
+
+.home-header h1 {
+  color: #e85231;
+  font-weight: 900;
+}
+
+.home-header h1 span {
+  color: #111820;
+}
+
+.wallet-pill,
+.library-button,
+.round-button,
+.product-tabs,
+.bottom-nav {
+  border-color: rgba(18, 29, 38, 0.08);
+  background: rgba(255, 250, 240, 0.84);
+}
+
+.product-tabs button.is-active,
+.nav-item.is-active,
+.category-chip.is-active span {
+  background: #111820;
+  color: #fff6df;
+}
+
+.nav-item.is-active {
+  background: transparent;
+  color: var(--green);
+}
+
+.nav-item.is-active::before,
+.category-chip.is-active b::after {
+  background: var(--green);
+}
+
+.chat-callout,
+.made-for-panel,
+.partner-detail-panel,
+.generation-panel,
+.quick-structure-panel {
+  border-color: rgba(246, 191, 40, 0.34);
+  background:
+    radial-gradient(circle at 94% 18%, rgba(246, 191, 40, 0.18), transparent 28%),
+    linear-gradient(145deg, #fffaf0, #fff0ca);
+}
+
+.chat-callout > span,
+.forecast-strip > span,
+.made-for-panel > span,
+.parts-heading > span,
+.question-row span,
+.generation-panel > span,
+.quick-structure-head > span {
+  background: #fff1bd;
+  color: #bd7411;
+}
+
+.forecast-strip,
+.linked-experience-card,
+.podcast-hero {
+  border-color: rgba(246, 191, 40, 0.28);
+  background:
+    radial-gradient(circle at 84% 14%, rgba(246, 191, 40, 0.30), transparent 32%),
+    radial-gradient(circle at 18% 20%, rgba(7, 134, 111, 0.18), transparent 30%),
+    linear-gradient(145deg, #111820, #1c2b38);
+  color: #fff6df;
+}
+
+.forecast-strip strong,
+.forecast-strip small,
+.forecast-strip i {
+  color: #fff6df;
+}
+
+.large-story-card,
+.mini-story-card,
+.compact-special-card,
+.general-report-card,
+.book-card,
+.library-card,
+.audiobook-row,
+.parts-panel,
+.question-row,
+.part-row,
+.window-card,
+.audio-player,
+.unlock-sheet,
+.paywall-panel {
+  border-color: rgba(18, 29, 38, 0.08);
+  background: rgba(255, 250, 240, 0.97);
+  box-shadow:
+    0 14px 34px rgba(19, 26, 32, 0.10),
+    0 1px 0 rgba(255, 255, 255, 0.82) inset;
+}
+
+.large-story-card.has-video {
+  border-color: rgba(246, 191, 40, 0.42);
+  box-shadow:
+    0 24px 58px rgba(18, 29, 38, 0.18),
+    0 0 0 1px rgba(255, 246, 223, 0.50) inset;
+}
+
+.large-story-body,
+.compact-special-card,
+.general-report-card,
+.book-card,
+.library-card,
+.audiobook-row {
+  background:
+    linear-gradient(145deg, rgba(255, 250, 240, 0.98), rgba(255, 244, 220, 0.95));
+}
+
+.story-axis,
+.part-pill-row span,
+.mini-story-footer span,
+.quick-structure-grid div {
+  border-color: rgba(18, 29, 38, 0.06);
+  background: rgba(255, 238, 190, 0.68);
+}
+
+.cover-art {
+  background:
+    linear-gradient(90deg, rgba(17, 24, 32, 0.13) 0 5%, transparent 5%),
+    radial-gradient(circle at 76% 12%, rgba(246, 191, 40, 0.26), transparent 30%),
+    linear-gradient(145deg, #fff9e8, color-mix(in srgb, var(--tone-soft) 54%, #ffe8aa));
+}
+
+.cover-art::before {
+  border-color: rgba(18, 29, 38, 0.12);
+}
+
+.cover-art > strong,
+.talking-topline b,
+.discovery-label,
+.pay-option i {
+  background: #f6bf28;
+  color: #111820;
+}
+
+.cover-art em,
+.compact-special-card span,
+.book-copy span,
+.general-report-copy span,
+.library-card span,
+.audiobook-row span,
+.section-title span,
+.section-intro span,
+.reader-section-head > span,
+.reader-article > span,
+.window-card span {
+  color: #bd7411;
+}
+
+.primary-action,
+.paywall-panel button,
+.pay-button,
+.compact-card-actions button:last-child,
+.library-actions button:last-child,
+.book-actions button:last-child,
+.general-report-actions button,
+.partner-detail-panel button {
+  border-color: var(--green);
+  background: var(--green);
+  color: #ffffff;
+  box-shadow: 0 12px 26px rgba(7, 134, 111, 0.20);
+}
+
+.secondary-action {
+  border-color: rgba(7, 134, 111, 0.20);
+  color: var(--green);
+}
+
+.listen-action,
+.audio-player {
+  border-color: rgba(246, 191, 40, 0.34);
+  background:
+    radial-gradient(circle at 94% 16%, rgba(246, 191, 40, 0.18), transparent 28%),
+    linear-gradient(145deg, #fffaf0, #fff0c9);
+}
+
+.audio-player button,
+.audiobook-row button,
+.podcast-hero button {
+  background: var(--green);
+  color: #ffffff;
+}
+
+.audio-screen {
+  background:
+    radial-gradient(circle at 50% 18%, rgba(246, 191, 40, 0.24), transparent 38%),
+    radial-gradient(circle at 18% 8%, rgba(7, 134, 111, 0.18), transparent 30%),
+    linear-gradient(180deg, #172431 0%, #111820 58%, #090e14 100%);
+  color: #fff6df;
+}
+
+.audio-screen::before {
+  background: radial-gradient(circle, rgba(246, 191, 40, 0.24), transparent 68%);
+}
+
+.spotify-player h1,
+.audio-next-up button,
+.now-speaking-card strong {
+  color: #fff6df;
+}
+
+.audio-progress {
+  background: rgba(255, 246, 223, 0.16);
+}
+
+.audio-progress i {
+  background: linear-gradient(90deg, var(--green), #f6bf28);
+}
+
+.audio-control-row .audio-main-control {
+  background: #f6bf28;
+  color: #111820;
+}
+
+.now-speaking-card,
+.audio-chapter-list button,
+.audio-next-up button {
+  border-color: rgba(255, 246, 223, 0.12);
+  background: rgba(255, 246, 223, 0.08);
+}
+
+.audio-chapter-list button.is-active {
+  border-color: rgba(246, 191, 40, 0.54);
+  background: rgba(246, 191, 40, 0.16);
+  box-shadow: inset 0 -3px 0 #f6bf28;
+}
+
+.reader-screen {
+  background: #fff7e5;
+}
+
+.reader-progress span.is-read,
+.mode-switch button.is-active {
+  background: var(--green);
+}
+
+.mode-switch button.is-active {
+  color: #ffffff;
+}
+
+.home-indicator {
+  background: #111820;
+}
+
+.tone-pink {
+  --tone: #d84c76;
+  --tone-soft: #f7d7e1;
+}
+
+.tone-coral {
+  --tone: #e85231;
+  --tone-soft: #ffd9cc;
+}
+
+.tone-blue {
+  --tone: #1f5f7a;
+  --tone-soft: #d9e8ee;
+}
+
+.tone-yellow {
+  --tone: #bd7411;
+  --tone-soft: #f8dfa3;
+}
+
+.tone-green {
+  --tone: #07866f;
+  --tone-soft: #d7eee6;
+}
+
+.tone-gold {
+  --tone: #9a741d;
+  --tone-soft: #f0d993;
 }
