@@ -138,6 +138,69 @@ const stories = [
     unlockNote: "full transit map + remedies",
   },
   {
+    id: "pankaj-harsha-match",
+    category: "Marriage",
+    related: ["Love", "Marriage"],
+    scope: "Personalized match report",
+    type: "Kundli Matching · Pankaj & Harsha",
+    badge: "New match",
+    title: "Pankaj & Harsha Matching Report",
+    subtitle: "A focused compatibility read with score, strengths, friction points, and remedies.",
+    chatQuestion: "Pankaj aur Harsha ki kundli matching kaisi hai - marriage compatible hai kya?",
+    chatShort: "\"Pankaj & Harsha matching report\"",
+    price: 599,
+    oldPrice: 999,
+    rating: "4.92",
+    reads: "19k",
+    pages: 4,
+    minutes: 6,
+    axis: "Kundli match x Pankaj x Harsha",
+    formatLabel: "4 pages · score + remedies",
+    trailer: "Compatibility summary · 48 sec",
+    parts: ["Match score", "Compatibility", "Challenges", "Remedies"],
+    freePages: 1,
+    personalized: true,
+    audio: true,
+    cover: "matchGrid",
+    coverLabel: "Pankaj x Harsha",
+    coverImage: "assets/cards/kundli-compatibility.png",
+    color: "green",
+    madeFor: "Pankaj & Harsha",
+    source: "uses both birth charts and the matching report shared for this couple",
+    forecast: "Marriage · Kundli matching",
+    forecastCopy: "A quick couple report built around compatibility, pressure points, and care steps.",
+    filters: ["Kundli", "Partner", "Marriage", "Audio", "Personalized"],
+    detailTitle: "Pankaj & Harsha",
+    insideTitle: "What this matching report contains",
+    questions: [
+      "Overall compatibility score kya suggest karta hai?",
+      "Marriage ke liye strongest support points kya hain?",
+      "Where can conflict or family pressure come up?",
+      "Emotional understanding aur communication kaisa rahega?",
+      "Which remedies or habits can protect the relationship?",
+    ],
+    inside: [
+      ["Score", "Overall kundli match score and what it means.", "p.1"],
+      ["Strengths", "Where both charts naturally support each other.", "p.2"],
+      ["Risks", "Likely friction points, timing pressure, and emotional gaps.", "p.3"],
+      ["Remedies", "Simple spiritual and practical care steps.", "p.4"],
+    ],
+    reader: {
+      kicker: "I · MATCHING SUMMARY",
+      headline: "This match works best when warmth is supported by clear communication.",
+      paragraphs: [
+        "Pankaj and Harsha's matching report points to a relationship with real marriage potential, but the strength is not only in the score. The important part is how both people handle pressure, family expectations, and emotional timing.",
+        "The strongest zone is commitment and long-term intention. The softer zone needs care: misunderstandings can grow when either person stays quiet instead of explaining what they need.",
+        "The full report keeps the language simple: compatibility score, emotional fit, practical challenges, and remedies that can be followed without heavy astrology jargon.",
+      ],
+      window: "Marriage discussion phase",
+      peak: "Family alignment",
+      format: "4-page match report",
+      strength: 4,
+    },
+    unlockNote: "full matching score + remedies",
+  },
+  {
     id: "june-introduce",
     category: "June 2026",
     related: ["Love", "Marriage", "Family"],
@@ -653,7 +716,7 @@ const state = {
   downloadedReportIds: new Set(["jupiter-cancer-transit", "relationship-improve-june"]),
   downloadedAudioIds: new Set(["jupiter-cancer-transit"]),
   bookmarkedReportIds: new Set(["june-introduce", "kundli-match"]),
-  generatedReportIds: new Set(["jupiter-cancer-transit", "relationship-improve-june"]),
+  generatedReportIds: new Set(["pankaj-harsha-match", "jupiter-cancer-transit", "relationship-improve-june"]),
   lastGeneratedStoryId: "",
   generatingStoryId: "",
   activeAudioSectionIndex: 0,
@@ -1131,6 +1194,7 @@ function renderDiscoveryLabel(story) {
 }
 
 function getDiscoveryLabel(story) {
+  if (story.id === "pankaj-harsha-match") return "Top Report";
   if (["june-introduce", "ritu-reply", "shaadi-window"].includes(story.id)) return "Recommended for You";
   if (["jupiter-cancer-transit", "kundli-match", "relationship-improve-june"].includes(story.id)) return "Most Bought";
   if (story.personalized || story.pages <= 5) return "Quick Answer";
@@ -1822,7 +1886,7 @@ function renderLargeStoryCard(story) {
         </div>
         <h2>${escapeHtml(story.title)}</h2>
         <div class="large-story-meta">
-          <strong>${escapeHtml(story.title)}</strong>
+          <strong>${escapeHtml(story.scope || story.type)}</strong>
           <span>${escapeHtml(story.category)} · ${story.pages} p · ${story.personalized ? (isUnlocked ? "Included" : "Subscriber only") : "Free"}</span>
         </div>
         <p>${escapeHtml(story.subtitle)}</p>
