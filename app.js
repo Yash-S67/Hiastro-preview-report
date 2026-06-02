@@ -761,6 +761,8 @@ const state = {
   generatedReportIds: new Set(["pankaj-harsha-match", "jupiter-cancer-transit", "relationship-improve-june"]),
   lastGeneratedStoryId: "",
   generatingStoryId: "",
+  partnerDetailsByStoryId: {},
+  pendingGenerationMode: "Read",
   activeAudioSectionIndex: 0,
   videoPaused: new Set(),
   videoSoundOn: new Set(),
@@ -785,6 +787,7 @@ app.addEventListener("click", (event) => {
   const videoToggle = event.target.closest("[data-video-toggle]");
   const videoSound = event.target.closest("[data-video-sound]");
   const audioSection = event.target.closest("[data-audio-section]");
+  const partnerGenerate = event.target.closest("[data-generate-kundli]");
   const action = event.target.closest("[data-action]");
 
   if (videoSound) {
@@ -806,6 +809,11 @@ app.addEventListener("click", (event) => {
   if (audioSection) {
     state.activeAudioSectionIndex = Number(audioSection.dataset.audioSection) || 0;
     render();
+    return;
+  }
+
+  if (partnerGenerate) {
+    generateKundliMatch(partnerGenerate.dataset.generateKundli || getSelectedStory().id);
     return;
   }
 
@@ -928,8 +936,15 @@ function handleAction(action) {
 function openReader(storyId, mode) {
   state.selectedStoryId = storyId;
   const story = getSelectedStory();
+  if (requiresPartnerDetails(story) && !hasPartnerDetails(storyId)) {
+    state.pendingGenerationMode = mode;
+    state.screen = "detail";
+    showToast("Add partner details to generate this Kundli match.");
+    render();
+    return;
+  }
   if (story.personalized && isSubscriber() && !state.generatedReportIds.has(storyId)) {
-    startReportGeneration(storyId);
+    startReportGeneration(storyId, mode);
     return;
   }
   state.readerMode = mode;
@@ -942,6 +957,18 @@ function openReader(storyId, mode) {
 
 function openAudioScreen(storyId) {
   state.selectedStoryId = storyId;
+  const story = getSelectedStory();
+  if (requiresPartnerDetails(story) && !hasPartnerDetails(storyId)) {
+    state.pendingGenerationMode = "Listen";
+    state.screen = "detail";
+    showToast("Add partner details before listening to this Kundli match.");
+    render();
+    return;
+  }
+  if (story.personalized && isSubscriber() && !state.generatedReportIds.has(storyId)) {
+    startReportGeneration(storyId, "Listen");
+    return;
+  }
   state.readerMode = "Listen";
   state.activeAudioSectionIndex = 0;
   state.screen = "audio";
@@ -950,10 +977,11 @@ function openAudioScreen(storyId) {
   playCurrentAudio(getSelectedStory());
 }
 
-function startReportGeneration(storyId) {
+function startReportGeneration(storyId, mode = "Read") {
   state.selectedStoryId = storyId;
   state.generatingStoryId = storyId;
   state.lastGeneratedStoryId = "";
+  state.pendingGenerationMode = mode;
   state.screen = "generating";
   stopNarration(false);
   render();
@@ -962,10 +990,34 @@ function startReportGeneration(storyId) {
     state.generatedReportIds.add(storyId);
     state.lastGeneratedStoryId = storyId;
     state.generatingStoryId = "";
-    state.readerMode = "Read";
-    state.screen = "reader";
+    state.readerMode = state.pendingGenerationMode || "Read";
+    state.activeAudioSectionIndex = 0;
+    state.screen = state.readerMode === "Listen" ? "audio" : "reader";
     render();
+    if (state.readerMode === "Listen") {
+      startNarration(getSelectedStory(), false);
+      playCurrentAudio(getSelectedStory());
+    }
   }, 1800);
+}
+
+function generateKundliMatch(storyId) {
+  state.partnerDetailsByStoryId[storyId] = {
+    name: "Harsha",
+    dob: "12 Aug 1997",
+    time: "07:45 PM",
+    place: "Jaipur, Rajasthan",
+  };
+  state.pendingGenerationMode = "Read";
+  startReportGeneration(storyId, "Read");
+}
+
+function requiresPartnerDetails(story) {
+  return story.id === "kundli-match";
+}
+
+function hasPartnerDetails(storyId) {
+  return Boolean(state.partnerDetailsByStoryId[storyId]);
 }
 
 function toggleStoryVideo(storyId) {
@@ -1506,14 +1558,24 @@ function renderDetailScreen() {
   const story = getSelectedStory();
   const isUnlocked = isStoryUnlocked(story);
   const isGenerated = state.generatedReportIds.has(story.id);
+  const needsPartnerDetails = requiresPartnerDetails(story);
+  const partnerDetailsAdded = hasPartnerDetails(story.id);
   const generationStatus = story.personalized
     ? isGenerated
       ? "Cached report"
+      : needsPartnerDetails && !partnerDetailsAdded
+        ? "Partner details required"
+        : needsPartnerDetails && partnerDetailsAdded
+          ? "Ready to generate"
       : "Generated after subscription"
     : "Ready instantly";
   const generationCopy = story.personalized
     ? isGenerated
       ? "Loaded instantly from the saved report cache."
+      : needsPartnerDetails && !partnerDetailsAdded
+        ? "Add partner birth details first. The report is generated in real time after details are submitted."
+        : needsPartnerDetails && partnerDetailsAdded
+          ? "Partner details are captured. Tap Read or Listen to generate and cache the full match."
       : "Preview is available now. Full report is created only after subscription to save compute."
     : "General report is a standard template and does not need personal generation.";
   const accessLabel = story.personalized
@@ -1544,7 +1606,7 @@ function renderDetailScreen() {
         <p><strong>${generationStatus}</strong><small>${generationCopy}</small></p>
       </section>
       ${renderQuickReportStructure(story)}
-      ${story.id === "kundli-match" ? renderPartnerDetailPanel() : ""}
+      ${story.id === "kundli-match" ? renderPartnerDetailPanel(story) : ""}
       ${renderPartsPanel(story)}
       <section class="questions-panel">
         <span>${escapeHtml(story.insideTitle)}</span>
@@ -1564,6 +1626,16 @@ function renderDetailScreen() {
 function renderDetailActionBar() {
   const story = getSelectedStory();
   const isUnlocked = isStoryUnlocked(story);
+  const needsPartnerDetails = requiresPartnerDetails(story) && !hasPartnerDetails(story.id);
+  const primaryAction = needsPartnerDetails
+    ? `data-generate-kundli="${story.id}"`
+    : story.personalized && !isUnlocked
+      ? `data-buy="${story.id}"`
+      : `data-listen="${story.id}"`;
+  const primaryIcon = needsPartnerDetails ? "spark" : story.personalized && !isUnlocked ? "lock" : "headphones";
+  const primaryMeta = needsPartnerDetails ? "Real-time" : story.personalized && !isUnlocked ? "Subscriber only" : `${story.minutes} min`;
+  const primaryLabel = needsPartnerDetails ? "Generate" : story.personalized && !isUnlocked ? "Subscribe" : "Listen";
+
   return `
     <section class="detail-actions">
       <button class="secondary-action" type="button" data-read="${story.id}">
@@ -1571,24 +1643,44 @@ function renderDetailActionBar() {
         <span>${story.freePages} pages</span>
         <strong>Preview</strong>
       </button>
-      <button class="primary-action" type="button" ${story.personalized && !isUnlocked ? `data-buy="${story.id}"` : `data-listen="${story.id}"`}>
-        ${renderIcon(story.personalized && !isUnlocked ? "lock" : "headphones")}
-        <span>${story.personalized && !isUnlocked ? "Subscriber only" : `${story.minutes} min`}</span>
-        <strong>${story.personalized && !isUnlocked ? "Subscribe" : "Listen"}</strong>
+      <button class="primary-action" type="button" ${primaryAction}>
+        ${renderIcon(primaryIcon)}
+        <span>${primaryMeta}</span>
+        <strong>${primaryLabel}</strong>
       </button>
     </section>
   `;
 }
 
-function renderPartnerDetailPanel() {
+function renderPartnerDetailPanel(story) {
+  const partner = state.partnerDetailsByStoryId[story.id];
+  if (partner) {
+    return `
+      <section class="partner-detail-panel is-complete">
+        <div>
+          <span>${renderIcon("check")}</span>
+          <strong>Partner details added</strong>
+          <small>${escapeHtml(partner.name)} · ${escapeHtml(partner.dob)} · ${escapeHtml(partner.time)} · ${escapeHtml(partner.place)}</small>
+        </div>
+        <button type="button" data-read="${story.id}">Open generated match</button>
+      </section>
+    `;
+  }
+
   return `
     <section class="partner-detail-panel">
       <div>
         <span>${renderIcon("profile")}</span>
-        <strong>Partner details required</strong>
-        <small>Name, date of birth, time, and place before generating the full Kundli match report.</small>
+        <strong>Generate Kundli Matching report</strong>
+        <small>Collect partner details, combine both charts, and generate the report in real time.</small>
       </div>
-      <button type="button" data-action="menu">Add partner details</button>
+      <div class="partner-detail-fields" aria-label="Partner details preview">
+        <label><span>Partner name</span><b>Harsha</b></label>
+        <label><span>Date of birth</span><b>12 Aug 1997</b></label>
+        <label><span>Birth time</span><b>07:45 PM</b></label>
+        <label><span>Birth place</span><b>Jaipur, Rajasthan</b></label>
+      </div>
+      <button type="button" data-generate-kundli="${story.id}">Generate report now</button>
     </section>
   `;
 }

@@ -3817,14 +3817,14 @@ body {
   text-align: left;
 }
 
-.partner-detail-panel div {
+.partner-detail-panel > div:first-child {
   display: grid;
   grid-template-columns: 34px minmax(0, 1fr);
   gap: 2px 10px;
   align-items: center;
 }
 
-.partner-detail-panel div > span {
+.partner-detail-panel > div:first-child > span {
   display: grid;
   width: 32px;
   height: 32px;
@@ -3850,12 +3850,61 @@ body {
   line-height: 1.28;
 }
 
+.partner-detail-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.partner-detail-fields label {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+  padding: 9px;
+  border: 1px solid rgba(22, 23, 24, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 253, 247, 0.70);
+}
+
+.partner-detail-fields span,
+.partner-detail-fields b {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.partner-detail-fields span {
+  color: var(--muted);
+  font-size: 9.5px;
+  font-weight: 950;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.partner-detail-fields b {
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 900;
+}
+
 .partner-detail-panel button {
   min-height: 40px;
   border-radius: 8px;
   background: #17191b;
   color: #fff8e8;
   font-weight: 900;
+}
+
+.partner-detail-panel.is-complete {
+  border-color: rgba(7, 134, 111, 0.28);
+  background:
+    radial-gradient(circle at 94% 18%, rgba(7, 134, 111, 0.12), transparent 28%),
+    linear-gradient(145deg, rgba(255, 253, 247, 0.98), rgba(224, 243, 236, 0.92));
+}
+
+.partner-detail-panel.is-complete > div:first-child > span {
+  background: var(--green);
 }
 
 .audiobook-list {
