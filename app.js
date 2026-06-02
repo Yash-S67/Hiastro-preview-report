@@ -680,48 +680,49 @@ const stories = [
     id: "kundli-match",
     category: "Marriage",
     related: ["Love"],
-    scope: "Deep personalized match",
+    scope: "Real-time Kundli Matching",
     type: "Kundli match · 2 charts",
-    badge: "Deep read",
-    title: "Are we actually compatible long term?",
-    subtitle: "Kundli match, emotional fit, family friction, and what needs care.",
+    badge: "P0 flow",
+    title: "Kundli Matching Report",
+    subtitle: "Add partner details, generate the match in real time, then read or listen calmly.",
     chatQuestion: "Kundli match acha hai kya? Long term compatibility kaisi rahegi?",
     chatShort: "\"Kundli match aur long-term compatibility?\"",
-    price: 899,
-    oldPrice: 1499,
+    price: 599,
+    oldPrice: 999,
     rating: "4.92",
     reads: "19k",
-    pages: 18,
-    minutes: 28,
+    pages: 6,
+    minutes: 8,
     axis: "Kundli match x Love x Marriage",
-    formatLabel: "18 sections · deep audio",
+    formatLabel: "6 pages · score + care plan",
     trailer: "Compatibility trailer · 75 sec",
-    parts: ["Guna", "Emotional fit", "Family", "Care plan"],
-    freePages: 2,
+    parts: ["Details", "Score", "Strengths", "Risks", "Remedies"],
+    freePages: 1,
     personalized: true,
     audio: true,
     cover: "matchGrid",
     coverLabel: "2-chart match",
     coverImage: "assets/cards/kundli-compatibility.png",
     color: "green",
-    madeFor: "Ananya",
+    madeFor: "You + partner",
     source: "uses both charts, chat patterns, and compatibility scoring",
     forecast: "Marriage · Kundli match",
     forecastCopy: "For guna, emotion, family, conflict, and remedies.",
     filters: ["Kundli", "Partner", "Audio", "Personalized"],
     detailTitle: "Kundli Match",
-    insideTitle: "Questions you'll find answered",
+    insideTitle: "What the generated match will answer",
     questions: [
       "Are we compatible long term?",
       "Where will we fight most?",
       "Family acceptance strong hai kya?",
-      "Which remedy protects the relationship?",
+      "Which remedies and practical habits protect the relationship?",
     ],
     inside: [
-      ["Guna", "Where the match is strong.", "p.1"],
-      ["Emotion", "How both people handle stress.", "p.5"],
-      ["Family", "Approval and pressure points.", "p.10"],
-      ["Care plan", "Spiritual and practical remedies.", "p.16"],
+      ["Partner details", "Name, DOB, time, and place are captured first.", "step 1"],
+      ["Score", "Overall match score and what it means.", "p.1"],
+      ["Strengths", "Where the two charts naturally support marriage.", "p.2"],
+      ["Risks", "Family, timing, and emotional friction points.", "p.4"],
+      ["Care plan", "Spiritual and practical remedies.", "p.6"],
     ],
     reader: {
       kicker: "IV · THE MATCH",
@@ -731,11 +732,73 @@ const stories = [
         "Family pressure is manageable if both people present the same story. Mixed signals create more damage than actual disagreement.",
         "The remedy is split in two: a Friday Venus practice for softness, and one practical rule for the relationship: no important conversations after midnight.",
       ],
-      window: "Aug 2026 -> Jan 2027",
-      peak: "9 Oct",
-      format: "Family discussion",
+      window: "Generated after partner details",
+      peak: "Cached after first generation",
+      format: "6-page match report",
       strength: 5,
     },
+    reportSections: [
+      {
+        kicker: "Page 1 · Match score",
+        title: "Overall compatibility and marriage signal",
+        body: "The generated report starts with a simple compatibility score and explains it in plain language. The score is treated as a direction signal, not a fear-heavy verdict, so the user understands where the relationship is strong and where it needs care.",
+        bullets: [
+          "Overall match score with a short interpretation.",
+          "Whether marriage discussion looks naturally supported.",
+          "The main reason this match can work or become difficult.",
+        ],
+      },
+      {
+        kicker: "Page 2 · Emotional fit",
+        title: "How both people handle love, pressure, and silence",
+        body: "This section explains emotional compatibility in a user-friendly way. It focuses on how both partners communicate, what creates misunderstanding, and what kind of reassurance the relationship needs.",
+        bullets: [
+          "Communication pattern during stress.",
+          "Where emotional expectations may mismatch.",
+          "One practical habit that can reduce conflict.",
+        ],
+      },
+      {
+        kicker: "Page 3 · Family and timing",
+        title: "Family acceptance, delay risk, and right window",
+        body: "The report highlights whether family pressure, timing, or external resistance may affect the relationship. It gives a clear window for when conversations are easier and when the couple should avoid rushing.",
+        bullets: [
+          "Favorable window for serious family discussion.",
+          "Possible delay or resistance area.",
+          "What to avoid while introducing the match.",
+        ],
+      },
+      {
+        kicker: "Page 4 · Dosha and caution",
+        title: "Important astrological cautions without jargon",
+        body: "If any dosha or caution appears, the report explains it simply: what it means, how severe it is, and whether it needs a ritual remedy, a practical behavior change, or only awareness.",
+        bullets: [
+          "Simple dosha explanation if present.",
+          "Severity shown as low, medium, or high.",
+          "No fear-first language or confusing chart dumps.",
+        ],
+      },
+      {
+        kicker: "Page 5 · Remedies",
+        title: "Gentle remedies and practical next steps",
+        body: "The care plan combines astrology remedies with real relationship guidance. The aim is to make the user feel calmer and more equipped, not scared or dependent.",
+        bullets: [
+          "One spiritual remedy for relationship softness.",
+          "One communication rule for both partners.",
+          "One next step for moving the relationship forward.",
+        ],
+      },
+      {
+        kicker: "Page 6 · Final answer",
+        title: "Clear recommendation for the user",
+        body: "The report ends with a direct, emotionally safe answer: whether to proceed, wait, clarify, or take family-level discussion slowly. It gives the user a next action rather than leaving them with only a score.",
+        bullets: [
+          "Proceed / wait / clarify recommendation.",
+          "Best next conversation to have.",
+          "When to revisit the report or talk to an astrologer.",
+        ],
+      },
+    ],
     unlockNote: "full match + care plan",
   },
 ];
@@ -868,6 +931,14 @@ app.addEventListener("click", (event) => {
   if (action) handleAction(action.dataset.action);
 });
 
+app.addEventListener("submit", (event) => {
+  const form = event.target.closest("[data-kundli-form]");
+  if (!form) return;
+
+  event.preventDefault();
+  submitKundliMatchForm(form);
+});
+
 function handleAction(action) {
   let playAudioAfterRender = false;
 
@@ -920,17 +991,59 @@ function handleAction(action) {
       playAudioAfterRender = true;
     }
   }
+  if (action === "submit-kundli-form") {
+    const form = app.querySelector("[data-kundli-form]");
+    if (form) {
+      form.requestSubmit();
+      return;
+    }
+    generateKundliMatch(getSelectedStory().id);
+  }
   if (action === "unlock") state.screen = "unlock";
   if (action === "close-unlock") state.screen = "detail";
   if (action === "pay") {
+    const story = getSelectedStory();
     state.subscriptionStatus = "subscribed";
     state.readerMode = "Read";
-    startReportGeneration(getSelectedStory().id);
+    if (requiresPartnerDetails(story) && !hasPartnerDetails(story.id)) {
+      state.screen = "detail";
+      showToast("Subscription active. Add partner details to generate the match.");
+    } else {
+      startReportGeneration(story.id);
+    }
   }
   if (action === "menu") showToast("More options");
 
   render();
   if (playAudioAfterRender) playCurrentAudio(getSelectedStory());
+}
+
+function submitKundliMatchForm(form) {
+  const storyId = form.dataset.kundliForm || getSelectedStory().id;
+  if (!isSubscriber()) {
+    state.selectedStoryId = storyId;
+    state.screen = "unlock";
+    showToast("Subscribe to generate this personalized Kundli match.");
+    render();
+    return;
+  }
+
+  const formData = new FormData(form);
+  const detail = {
+    name: String(formData.get("partnerName") || "").trim(),
+    dob: String(formData.get("partnerDob") || "").trim(),
+    time: String(formData.get("partnerTime") || "").trim(),
+    place: String(formData.get("partnerPlace") || "").trim(),
+  };
+
+  const isComplete = Object.values(detail).every(Boolean);
+  if (!isComplete) {
+    showToast("Please add name, date, time, and place.");
+    render();
+    return;
+  }
+
+  generateKundliMatch(storyId, detail);
 }
 
 function openReader(storyId, mode) {
@@ -1001,8 +1114,8 @@ function startReportGeneration(storyId, mode = "Read") {
   }, 1800);
 }
 
-function generateKundliMatch(storyId) {
-  state.partnerDetailsByStoryId[storyId] = {
+function generateKundliMatch(storyId, detail) {
+  state.partnerDetailsByStoryId[storyId] = detail || state.partnerDetailsByStoryId[storyId] || {
     name: "Harsha",
     dob: "12 Aug 1997",
     time: "07:45 PM",
@@ -1626,15 +1739,37 @@ function renderDetailScreen() {
 function renderDetailActionBar() {
   const story = getSelectedStory();
   const isUnlocked = isStoryUnlocked(story);
-  const needsPartnerDetails = requiresPartnerDetails(story) && !hasPartnerDetails(story.id);
-  const primaryAction = needsPartnerDetails
-    ? `data-generate-kundli="${story.id}"`
-    : story.personalized && !isUnlocked
-      ? `data-buy="${story.id}"`
-      : `data-listen="${story.id}"`;
-  const primaryIcon = needsPartnerDetails ? "spark" : story.personalized && !isUnlocked ? "lock" : "headphones";
-  const primaryMeta = needsPartnerDetails ? "Real-time" : story.personalized && !isUnlocked ? "Subscriber only" : `${story.minutes} min`;
-  const primaryLabel = needsPartnerDetails ? "Generate" : story.personalized && !isUnlocked ? "Subscribe" : "Listen";
+  const needsPartnerFlow = requiresPartnerDetails(story);
+  const partnerDetailsAdded = hasPartnerDetails(story.id);
+  const isGenerated = state.generatedReportIds.has(story.id);
+  const primaryAction = story.personalized && !isUnlocked
+    ? `data-buy="${story.id}"`
+    : needsPartnerFlow && !partnerDetailsAdded
+      ? `data-action="submit-kundli-form"`
+      : needsPartnerFlow && !isGenerated
+        ? `data-generate-kundli="${story.id}"`
+        : `data-listen="${story.id}"`;
+  const primaryIcon = story.personalized && !isUnlocked
+    ? "lock"
+    : needsPartnerFlow && !partnerDetailsAdded
+      ? "profile"
+      : needsPartnerFlow && !isGenerated
+        ? "spark"
+        : "headphones";
+  const primaryMeta = story.personalized && !isUnlocked
+    ? "Subscriber only"
+    : needsPartnerFlow && !partnerDetailsAdded
+      ? "Add details"
+      : needsPartnerFlow && !isGenerated
+        ? "Real-time"
+        : `${story.minutes} min`;
+  const primaryLabel = story.personalized && !isUnlocked
+    ? "Subscribe"
+    : needsPartnerFlow && !partnerDetailsAdded
+      ? "Generate"
+      : needsPartnerFlow && !isGenerated
+        ? "Generate"
+        : "Listen";
 
   return `
     <section class="detail-actions">
@@ -1659,29 +1794,42 @@ function renderPartnerDetailPanel(story) {
       <section class="partner-detail-panel is-complete">
         <div>
           <span>${renderIcon("check")}</span>
-          <strong>Partner details added</strong>
+          <strong>${state.generatedReportIds.has(story.id) ? "Generated and cached" : "Partner details added"}</strong>
           <small>${escapeHtml(partner.name)} · ${escapeHtml(partner.dob)} · ${escapeHtml(partner.time)} · ${escapeHtml(partner.place)}</small>
         </div>
-        <button type="button" data-read="${story.id}">Open generated match</button>
+        <div class="kundli-cache-track" aria-label="Kundli matching generation state">
+          <span class="is-done">Partner details</span>
+          <span class="is-done">Charts combined</span>
+          <span class="${state.generatedReportIds.has(story.id) ? "is-done" : ""}">Cached report</span>
+        </div>
+        <button type="button" ${state.generatedReportIds.has(story.id) ? `data-read="${story.id}"` : `data-generate-kundli="${story.id}"`}>
+          ${state.generatedReportIds.has(story.id) ? "Open generated match" : "Generate report now"}
+        </button>
       </section>
     `;
   }
 
+  const isUnlocked = isStoryUnlocked(story);
   return `
-    <section class="partner-detail-panel">
+    <form class="partner-detail-panel" data-kundli-form="${story.id}">
       <div>
         <span>${renderIcon("profile")}</span>
         <strong>Generate Kundli Matching report</strong>
-        <small>Collect partner details, combine both charts, and generate the report in real time.</small>
+        <small>Take partner details, combine both charts, generate in real time, and cache the result.</small>
       </div>
       <div class="partner-detail-fields" aria-label="Partner details preview">
-        <label><span>Partner name</span><b>Harsha</b></label>
-        <label><span>Date of birth</span><b>12 Aug 1997</b></label>
-        <label><span>Birth time</span><b>07:45 PM</b></label>
-        <label><span>Birth place</span><b>Jaipur, Rajasthan</b></label>
+        <label><span>Partner name</span><input name="partnerName" value="Harsha" aria-label="Partner name" /></label>
+        <label><span>Date of birth</span><input name="partnerDob" value="12 Aug 1997" aria-label="Partner date of birth" /></label>
+        <label><span>Birth time</span><input name="partnerTime" value="07:45 PM" aria-label="Partner birth time" /></label>
+        <label><span>Birth place</span><input name="partnerPlace" value="Jaipur, Rajasthan" aria-label="Partner birth place" /></label>
       </div>
-      <button type="button" data-generate-kundli="${story.id}">Generate report now</button>
-    </section>
+      <div class="kundli-cache-track" aria-label="Kundli matching flow">
+        <span>Partner details</span>
+        <span>Real-time generation</span>
+        <span>Cached reader</span>
+      </div>
+      <button type="submit">${isUnlocked ? "Generate report now" : "Subscribe to generate"}</button>
+    </form>
   `;
 }
 
@@ -1757,6 +1905,7 @@ function renderReaderScreen(dimmed) {
           <strong>${escapeHtml(story.reader.window)}</strong>
           <small>Most likely: <b>${escapeHtml(story.reader.peak)}</b> · Format: <em>${escapeHtml(story.reader.format)}</em></small>
         </aside>
+        ${renderKundliGeneratedSummary(story, isUnlocked)}
         <p>${escapeHtml(story.reader.paragraphs[1])}</p>
         <div class="${isUnlocked ? "" : "locked-copy"}">
           ${isUnlocked ? `<div class="reader-section-head">${renderSectionListenButton(story)}</div>` : ""}
@@ -1778,6 +1927,22 @@ function renderReaderScreen(dimmed) {
         </section>
       `}
     </main>
+  `;
+}
+
+function renderKundliGeneratedSummary(story, isUnlocked) {
+  if (!isUnlocked || !requiresPartnerDetails(story) || !hasPartnerDetails(story.id)) return "";
+
+  const partner = state.partnerDetailsByStoryId[story.id];
+  return `
+    <section class="kundli-generated-summary">
+      <span>Generated match inputs</span>
+      <div>
+        <p><b>You</b><small>${escapeHtml(story.madeFor || "User profile")} · saved birth chart</small></p>
+        <p><b>${escapeHtml(partner.name)}</b><small>${escapeHtml(partner.dob)} · ${escapeHtml(partner.time)} · ${escapeHtml(partner.place)}</small></p>
+      </div>
+      <strong>Report cached after real-time generation</strong>
+    </section>
   `;
 }
 
