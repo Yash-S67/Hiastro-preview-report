@@ -744,10 +744,10 @@ const params = new URLSearchParams(window.location.search);
 const initialStory = stories.find((story) => story.id === params.get("story")) || stories[0];
 
 const state = {
-  screen: params.get("screen") || "home",
+  screen: params.get("screen") || "app-home",
   selectedCategory:
     params.get("category") ||
-    (params.get("screen") && params.get("screen") !== "home" ? initialStory.category : "All"),
+    (params.get("screen") && !["home", "app-home"].includes(params.get("screen")) ? initialStory.category : "All"),
   selectedStoryId: initialStory.id,
   categoryFilter: "All",
   readerMode: "Read",
@@ -873,6 +873,11 @@ function handleAction(action) {
 
   if (action === "home") {
     state.screen = "home";
+    state.selectedCategory = "All";
+    stopNarration(false);
+  }
+  if (action === "app-home") {
+    state.screen = "app-home";
     state.selectedCategory = "All";
     stopNarration(false);
   }
@@ -1127,7 +1132,7 @@ function showToast(message) {
 }
 
 function render() {
-  const showBottomNav = ["home", "category", "saved"].includes(state.screen);
+  const showBottomNav = ["app-home", "home", "category", "saved"].includes(state.screen);
   app.innerHTML = `
     <section class="app-screen screen-${state.screen}">
       ${renderStatusBar()}
@@ -1140,6 +1145,7 @@ function render() {
 }
 
 function renderScreen() {
+  if (state.screen === "app-home") return renderHiAstroHomeScreen();
   if (state.screen === "category") return renderCategoryScreen();
   if (state.screen === "saved") return renderSavedBooksScreen();
   if (state.screen === "detail") return renderDetailScreen();
@@ -1161,6 +1167,71 @@ function renderStatusBar() {
         <span class="battery-icon"></span>
       </span>
     </div>
+  `;
+}
+
+function renderHiAstroHomeScreen() {
+  const marriageStory = stories.find((story) => story.id === "shaadi-window") || stories.find((story) => story.personalized) || stories[0];
+  const generalStory = stories.find((story) => story.id === "jupiter-cancer-transit") || stories.find((story) => !story.personalized) || stories[0];
+  return `
+    <main class="content-scroll hiastro-home-screen">
+      ${renderHomeHeader()}
+      <section class="hiastro-home-hero">
+        <span>Good evening, Yash</span>
+        <h2>What do you want clarity on today?</h2>
+        <button class="home-chat-input" type="button" data-action="menu">
+          ${renderIcon("message")}
+          <strong>Ask about love, career, marriage...</strong>
+          <i>${renderIcon("chevronRight")}</i>
+        </button>
+      </section>
+      <section class="home-report-cta" aria-label="Reports entry point">
+        <div>
+          <span>${renderIcon("bookOpen")} New</span>
+          <h2>Turn your repeated question into a short report</h2>
+          <p>${escapeHtml(marriageStory.chatShort)} can become a 5-6 page answer with timeline, reason, next step, and remedies.</p>
+          <div>
+            <button type="button" data-action="home">Open Reports</button>
+            <button type="button" data-open="${marriageStory.id}">Preview example</button>
+          </div>
+        </div>
+      </section>
+      <section class="home-today-card">
+        <div>
+          <span>${renderIcon("sun")}</span>
+          <small>Today</small>
+          <strong>Moon favors calm decisions after 6 PM</strong>
+          <p>Start with one question. If it repeats, create a report instead of asking the same chat again.</p>
+        </div>
+        <button type="button" data-open="${generalStory.id}">Read transit</button>
+      </section>
+      <section class="home-quick-grid" aria-label="Quick actions">
+        ${[
+          ["Chat with astrologer", "message", "menu"],
+          ["MyDay plan", "calendar", "myday"],
+          ["Quick Reports", "bookOpen", "home"],
+          ["Saved reports", "download", "saved-books"],
+        ]
+          .map(
+            ([label, icon, action]) => `
+              <button type="button" data-action="${action}">
+                <span>${renderIcon(icon)}</span>
+                <strong>${escapeHtml(label)}</strong>
+              </button>
+            `
+          )
+          .join("")}
+      </section>
+      <section class="home-preview-strip">
+        <div class="section-title">
+          <div>
+            <span>Recommended report</span>
+            <h2>Based on your recent chat</h2>
+          </div>
+        </div>
+        ${renderChatReportCTA(marriageStory)}
+      </section>
+    </main>
   `;
 }
 
@@ -2312,7 +2383,7 @@ function renderMetaPill(icon, text) {
 }
 
 function renderBottomNav() {
-  const activeLabel = state.screen === "saved" ? "Profile" : "Reports";
+  const activeLabel = state.screen === "app-home" ? "Astrologer" : state.screen === "saved" ? "Profile" : "Reports";
   const items = [
     ["Astrologer", "spark"],
     ["Chats", "message"],
@@ -2326,7 +2397,7 @@ function renderBottomNav() {
       <div class="bottom-nav-items">
         ${items
           .map(([label, icon], index) => `
-            <button class="nav-item ${label === activeLabel ? "is-active" : ""}" type="button" data-action="${label === "Reports" ? "home" : label === "Profile" ? "saved-books" : "menu"}">
+            <button class="nav-item ${label === activeLabel ? "is-active" : ""}" type="button" data-action="${label === "Astrologer" ? "app-home" : label === "Reports" ? "home" : label === "Profile" ? "saved-books" : "menu"}">
               ${renderIcon(icon)}
               <span>${escapeHtml(label)}</span>
             </button>
