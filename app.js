@@ -1127,11 +1127,13 @@ function showToast(message) {
 }
 
 function render() {
+  const showBottomNav = ["home", "category", "saved"].includes(state.screen);
   app.innerHTML = `
     <section class="app-screen screen-${state.screen}">
       ${renderStatusBar()}
       ${renderScreen()}
       ${state.screen === "detail" ? renderDetailActionBar() : ""}
+      ${showBottomNav ? renderBottomNav() : ""}
       ${state.toast ? `<div class="toast" role="status">${escapeHtml(state.toast)}</div>` : ""}
     </section>
   `;
@@ -1227,11 +1229,13 @@ function renderHomeScreen() {
     <main class="content-scroll home-screen">
       ${renderHomeHeader()}
       ${renderProductTabs()}
+      ${renderHomeReportEntry()}
       <section class="section-intro">
         <span>Special reports</span>
         <h2>Specially for you</h2>
         <p>${isSubscriber() ? "Your subscription unlocks personalized reports generated from repeated questions and chart context." : "General reports are free in trial and no-plan mode. Personalized reports unlock with subscription."}</p>
       </section>
+      ${renderChatReportCTA(specialReports.find((story) => story.id === "shaadi-window") || spotlight)}
       <section class="story-feed special-report-section" aria-label="Special reports from chat history">
         ${renderLargeStoryCard(spotlight)}
       </section>
@@ -1305,15 +1309,17 @@ function renderSavedBooksScreen() {
   const downloadedReports = getDownloadedReports();
   const downloadedAudioReports = getDownloadedAudioReports();
   const bookmarkedReports = getBookmarkedReports();
+  const purchasedReports = isSubscriber() ? stories.filter((story) => story.personalized).slice(0, 3) : [];
 
   return `
     <main class="content-scroll saved-screen">
-      ${renderTopNav("Saved books", "search")}
+      ${renderTopNav("My Reports", "search")}
       <section class="section-intro">
         <span>Library</span>
-        <h2>Your offline and bookmarked books</h2>
-        <p>Downloaded reports and audiobooks are available offline. Bookmarked books stay saved for later reading.</p>
+        <h2>Your report library</h2>
+        <p>Purchased reports, downloaded reads, offline audiobooks, and bookmarked books stay here.</p>
       </section>
+      ${renderBookSection("My reports", "Purchased and generated", purchasedReports, { status: "Purchased" })}
       ${renderBookSection("Downloaded reports", "Available offline", downloadedReports, { status: "Downloaded" })}
       ${renderBookSection("Downloaded audiobooks", "Offline listening", downloadedAudioReports, { status: "Audio downloaded", action: "listen" })}
       ${renderBookSection("Bookmarked books", "Saved for later", bookmarkedReports, { status: "Bookmarked" })}
@@ -1432,6 +1438,43 @@ function renderLinkedExperiences() {
   `;
 }
 
+function renderHomeReportEntry() {
+  const marriageStory = stories.find((story) => story.id === "shaadi-window") || stories.find((story) => story.personalized) || stories[0];
+  const generalStory = stories.find((story) => story.id === "jupiter-cancer-transit") || stories.find((story) => !story.personalized) || stories[0];
+  return `
+    <section class="report-home-entry" aria-label="Quick Reports">
+      <div class="report-entry-copy">
+        <span>${renderIcon("bookOpen")} Quick Reports</span>
+        <h2>Get a short answer from your recent question</h2>
+        <p>${escapeHtml(marriageStory.chatShort)} becomes a 5-6 page report with timeline, reason, next step, and remedies.</p>
+        <div>
+          <button type="button" data-open="${marriageStory.id}">Preview personalized</button>
+          <button type="button" data-open="${generalStory.id}">Browse free reports</button>
+        </div>
+      </div>
+      <button class="report-entry-mini" type="button" data-open="${marriageStory.id}">
+        <small>From chat</small>
+        <strong>${escapeHtml(marriageStory.title)}</strong>
+        <span>${marriageStory.pages} pages · ${isSubscriber() ? "Included" : "Subscriber"}</span>
+      </button>
+    </section>
+  `;
+}
+
+function renderChatReportCTA(story) {
+  return `
+    <button class="chat-report-cta" type="button" data-open="${story.id}">
+      <span>${renderIcon("message")}</span>
+      <div>
+        <small>After chat</small>
+        <strong>Create a personalized report</strong>
+        <p>${escapeHtml(story.chatShort)} · ${story.pages} pages · ${story.minutes} min</p>
+      </div>
+      <i>${renderIcon("chevronRight")}</i>
+    </button>
+  `;
+}
+
 function renderCompactSpecialCard(story) {
   const isUnlocked = isStoryUnlocked(story);
   return `
@@ -1495,7 +1538,7 @@ function renderHomeHeader() {
       <h1><span>Hi</span>Astro</h1>
       <button class="library-button" type="button" data-action="saved-books" aria-label="Open downloaded and bookmarked books">
         ${renderIcon("download")}
-        <b>Library</b>
+        <b>My Reports</b>
       </button>
     </header>
   `;
@@ -2269,9 +2312,11 @@ function renderMetaPill(icon, text) {
 }
 
 function renderBottomNav() {
+  const activeLabel = state.screen === "saved" ? "Profile" : "Reports";
   const items = [
     ["Astrologer", "spark"],
     ["Chats", "message"],
+    ["Reports", "bookOpen"],
     ["My Day", "sun"],
     ["Profile", "profile"],
   ];
@@ -2281,7 +2326,7 @@ function renderBottomNav() {
       <div class="bottom-nav-items">
         ${items
           .map(([label, icon], index) => `
-            <button class="nav-item ${index === 0 ? "is-active" : ""}" type="button" data-action="${index === 0 ? "home" : "menu"}">
+            <button class="nav-item ${label === activeLabel ? "is-active" : ""}" type="button" data-action="${label === "Reports" ? "home" : label === "Profile" ? "saved-books" : "menu"}">
               ${renderIcon(icon)}
               <span>${escapeHtml(label)}</span>
             </button>
